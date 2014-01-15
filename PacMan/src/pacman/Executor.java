@@ -16,6 +16,7 @@ import pacman.controllers.Controller;
 import pacman.controllers.FeatureUtils;
 import pacman.controllers.HumanController;
 import pacman.controllers.KeyBoardInput;
+import pacman.controllers.NeuralNetworkController;
 import pacman.controllers.StateValuePair;
 import pacman.controllers.examples.AggressiveGhosts;
 import pacman.controllers.examples.Legacy;
@@ -50,8 +51,7 @@ public class Executor
 	{
 		Executor exec=new Executor();
 		exec.getStateValuePairs(loadReplay("replay"), NeuralNetwork.createFromFile("controller"));
-
-
+		
 		/*
 		//run multiple games in batch mode - good for testing.
 		int numTrials=10;

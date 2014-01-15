@@ -11,9 +11,7 @@ import pacman.game.Constants.MOVE;
 public class FeatureUtils {
 
 	private static final int MAX_DISTANCE = 221;
-	private static final int DEPTH_LIMIT = MAX_DISTANCE;
 	
-
 	/**
 	 * get the features vector relative to nodeIndex and move
 	 */
@@ -31,7 +29,7 @@ public class FeatureUtils {
 			}
 		}
 		
-		float[] features = new float[8];
+		float[] features = new float[9];
 		features[0] = getMinimumDistance(game, nodeIndex, move, game.getActivePillsIndices());
 		features[1] = getMinimumDistance(game, nodeIndex, move, game.getActivePowerPillsIndices());
 		features[2] = getMinimumDistance(game, nodeIndex, move, toPrimitiveArray(normalGhosts));
@@ -40,6 +38,7 @@ public class FeatureUtils {
 		features[5] = getSavePathLength(game, nodeIndex, move);
 		features[6] = getRemainingNumberOfPills(game);
 		features[7] = getRemainingGameTime(game);
+		features[8] = move == game.getPacmanLastMoveMade().opposite() ? 1 : 0; // 1 if reversed
 		
 		return features;
 	}
@@ -83,9 +82,9 @@ public class FeatureUtils {
 					if (node.nodeIndex == goalNodeIndex)
 						return (float) node.depth / MAX_DISTANCE;
 				}
-				
+
 				// don't expand further if depth limit is reached
-				if (node.depth == DEPTH_LIMIT)
+				if (node.depth == MAX_DISTANCE)
 					continue;
 	
 				// expand frontier with neighbor nodes
@@ -129,7 +128,7 @@ public class FeatureUtils {
 					firstJunctionPaths.put(ghost, new int[] { game.getGhostCurrentNodeIndex(ghost) });
 				// ghost did not just left the lair
 				else
-					firstJunctionPaths.put(ghost, getPathToNextJunction(game, game.getGhostCurrentNodeIndex(ghost), game.getGhostLastMoveMade(ghost)));
+					firstJunctionPaths.put(ghost, getPathToJunction(game, game.getGhostCurrentNodeIndex(ghost), game.getGhostLastMoveMade(ghost)));
 			}
 		}
 
@@ -142,14 +141,16 @@ public class FeatureUtils {
 		// BFS
 		while (!frontier.isEmpty()) {
 			BFSNode node = frontier.pop();
-			
+
+			// continue if node is not safely reachable
 			if (reachableByGhost(game, node.nodeIndex, node.depth + EAT_DISTANCE, firstJunctionPaths))
 				continue;
 			
+			// don't expand further if depth limit is reached
 			if (node.depth == depthLimit)
 				return (float) node.depth / MAX_DISTANCE;
 
-			maxDepth = Math.max(maxDepth, node.depth);
+			maxDepth = node.depth;
 			
 			// expand frontier with neighbor nodes
 			for (MOVE move : game.getPossibleMoves(node.nodeIndex)) {
@@ -167,7 +168,7 @@ public class FeatureUtils {
 	 * returns 1 if no pill has been collected so far.
 	 */
 	private static float getRemainingNumberOfPills(Game game) {
-		return (float)game.getNumberOfActivePills() / game.getNumberOfPills();
+		return (float) (game.getNumberOfActivePills() + game.getNumberOfActivePowerPills()) / (game.getNumberOfPills() + game.getNumberOfPowerPills());
 	}
 	
 	/**
@@ -180,7 +181,7 @@ public class FeatureUtils {
 	/**
 	 * get the path to the next junction starting in nodeIndex taking the initial Move
 	 */
-	private static int[] getPathToNextJunction(Game game, int nodeIndex, MOVE initialMove) {
+	private static int[] getPathToJunction(Game game, int nodeIndex, MOVE initialMove) {
 		// no move
 		if (initialMove == MOVE.NEUTRAL)
 			throw new IllegalArgumentException("move must not be NEUTRAL");
