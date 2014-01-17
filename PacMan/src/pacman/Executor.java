@@ -52,6 +52,10 @@ public class Executor
 		Executor exec=new Executor();
 		exec.getStateValuePairs(loadReplay("replay"), NeuralNetwork.createFromFile("controller"));
 		
+		//policy evaluation averaging results from samples (x trials with same seed)
+		int numTrials=10;
+		exec.evalPolicy(new NeuralNetworkController(), new RandomGhosts(), numTrials);
+		
 		/*
 		//run multiple games in batch mode - good for testing.
 		int numTrials=10;
@@ -422,4 +426,30 @@ public class Executor
         
         return replay;
 	}
+
+	public float evalPolicy(Controller<MOVE> policy, Controller<EnumMap<GHOST,MOVE>> ghostController, int trials)
+	{
+    	Random rnd=new Random(0);
+    	long seed = rnd.nextLong();
+		Game game = new Game(seed);
+		int aScore = 0;
+		for(int i=0;i<trials;i++)
+		{
+			aScore = (aScore + evalSingleGame(game, policy, ghostController));
+			game = new Game(seed);
+		}
+		aScore = aScore / trials;
+		System.out.println(aScore);
+		return aScore;
+	}
+
+	public int evalSingleGame(Game game, Controller<MOVE> policy, Controller<EnumMap<GHOST,MOVE>> ghostController) 
+	{
+		while(!game.gameOver())
+		{
+			game.advanceGame(policy.getMove(game.copy(),System.currentTimeMillis()+DELAY), ghostController.getMove(game.copy(), System.currentTimeMillis()+DELAY));
+		}
+		return game.getScore();
+	}
+
 }
