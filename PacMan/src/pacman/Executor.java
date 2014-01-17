@@ -10,6 +10,9 @@ import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.LinkedList;
 import java.util.Random;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import neuralNetwork.NeuralNetwork;
 import pacman.controllers.Controller;
@@ -50,11 +53,10 @@ public class Executor
 	public static void main(String[] args)
 	{
 		Executor exec=new Executor();
-		exec.getStateValuePairs(loadReplay("replay"), NeuralNetwork.createFromFile("controller"));
 		
 		//policy evaluation averaging results from samples (x trials with same seed)
 		int numTrials=10;
-		exec.evalPolicy(new NeuralNetworkController(), new RandomGhosts(), numTrials);
+		float controllerScore = exec.evalPolicy(NeuralNetworkController.createFromFile("controller"), new StarterGhosts(), numTrials);
 		
 		/*
 		//run multiple games in batch mode - good for testing.
@@ -98,7 +100,6 @@ public class Executor
 		LinkedList<StateValuePair> stateValuePairList = new LinkedList<StateValuePair>();
 		
 		Game game=new Game(0);
-//		GameView gameView = new GameView(game).showGame();
 		for(String state : replayStates) {
 			game.setGameState(state);	
 			int currentNode = game.getPacmanCurrentNodeIndex();
@@ -107,7 +108,6 @@ public class Executor
 				float[] estimation = neuralNetwork.getOutput(features);
 				stateValuePairList.add(new StateValuePair(features, estimation[0]));
 			}
-//			gameView.repaint();
 		}
 		
 		StateValuePair[] stateValuePairs = new StateValuePair[stateValuePairList.size()];
@@ -427,29 +427,67 @@ public class Executor
         return replay;
 	}
 
-	public float evalPolicy(Controller<MOVE> policy, Controller<EnumMap<GHOST,MOVE>> ghostController, int trials)
-	{
-    	Random rnd=new Random(0);
-    	long seed = rnd.nextLong();
-		Game game = new Game(seed);
-		int aScore = 0;
-		for(int i=0;i<trials;i++)
-		{
-			aScore = (aScore + evalSingleGame(game, policy, ghostController));
-			game = new Game(seed);
+	public float evalPolicy(Controller<MOVE> policy, Controller<EnumMap<GHOST,MOVE>> ghostController, int trials) {
+		Random rnd=new Random(0);
+		Thread[] threads = new Thread[trials];
+		AccumulatedScore accumulatedScore = new AccumulatedScore();
+		
+		for (int i = 0; i < trials; i++) {
+			threads[i] = new Evaluator(new Game(rnd.nextLong()), policy, ghostController, accumulatedScore);
+			threads[i].start();
 		}
-		aScore = aScore / trials;
-		System.out.println(aScore);
-		return aScore;
+		
+		for (Thread thread : threads) {
+			try {
+				thread.join();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		return (float) accumulatedScore.getScore() / trials;
+	}
+	
+	private class Evaluator extends Thread {
+
+		Game game;
+		Controller<MOVE> pacmanController;
+		Controller<EnumMap<GHOST,MOVE>> ghostController;
+		AccumulatedScore accumulatedScore;
+		
+		public Evaluator(Game game, Controller<MOVE> pacmanController, Controller<EnumMap<GHOST,MOVE>> ghostController, AccumulatedScore accumulatedScore) {
+			this.game = game;
+			this.pacmanController = pacmanController;
+			this.ghostController = ghostController;
+			this.accumulatedScore = accumulatedScore;
+		}
+		
+		@Override
+		public void run() {
+			while(!game.gameOver()) {
+				game.advanceGame(pacmanController.getMove(game.copy(),System.currentTimeMillis()+DELAY), ghostController.getMove(game.copy(), System.currentTimeMillis()+DELAY));
+			}
+			
+			accumulatedScore.addScore(game.getScore());
+		}
+		
 	}
 
-	public int evalSingleGame(Game game, Controller<MOVE> policy, Controller<EnumMap<GHOST,MOVE>> ghostController) 
-	{
-		while(!game.gameOver())
-		{
-			game.advanceGame(policy.getMove(game.copy(),System.currentTimeMillis()+DELAY), ghostController.getMove(game.copy(), System.currentTimeMillis()+DELAY));
+	private class AccumulatedScore {
+		
+		private int accumulatedScore;
+		
+		public AccumulatedScore() {
+			accumulatedScore = 0;
 		}
-		return game.getScore();
+		
+		public synchronized void addScore(int score) {
+			accumulatedScore += score;
+		}
+		
+		public int getScore() {
+			return accumulatedScore;
+		}
 	}
-
+		
 }
