@@ -465,12 +465,11 @@ public class Executor
 		@Override
 		public void run() {
 			while(!game.gameOver()) {
-				game.advanceGame(pacmanController.getMove(game.copy(),System.currentTimeMillis()+DELAY), ghostController.getMove(game.copy(), System.currentTimeMillis()+DELAY));
+				game.advanceGame(pacmanController.getMove(game,System.currentTimeMillis()+DELAY), ghostController.getMove(game, System.currentTimeMillis()+DELAY));
 			}
 			
 			accumulatedScore.addScore(game.getScore());
 		}
-		
 	}
 
 	private class AccumulatedScore {
