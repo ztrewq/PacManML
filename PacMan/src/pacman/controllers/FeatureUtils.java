@@ -1,8 +1,10 @@
 package pacman.controllers;
 
 import static pacman.game.Constants.EAT_DISTANCE;
+
 import java.util.EnumMap;
 import java.util.LinkedList;
+
 import pacman.game.Constants;
 import pacman.game.Game;
 import pacman.game.Constants.GHOST;
@@ -56,7 +58,7 @@ public class FeatureUtils {
 	}
 	
 	/**
-	 * get the minimum path distance needed to reach any node in goalNodeIndices starting in startNodeIndex and taking the initialMove
+	 * get the minimum path distance needed to reach any node in goalNodeIndices starting in startNodeIndex and taking the initialMove.
 	 */
 	private static float getMinimumDistance(Game game, int startNodeIndex, MOVE initialMove, int[] goalNodeIndices) {
 		if (game.getNeighbour(startNodeIndex, initialMove) == -1)
@@ -70,19 +72,39 @@ public class FeatureUtils {
 					return 0;
 			}
 			
-			// BFS
+			// breadth first search
 			LinkedList<BFSNode> frontier = new LinkedList<BFSNode>();
 			frontier.add(new BFSNode(game.getNeighbour(startNodeIndex, initialMove), startNodeIndex, 1));
 			
 			while (!frontier.isEmpty()) {
 				BFSNode node = frontier.pop();
 				
+				// reached startNode again
+				if (node.nodeIndex == startNodeIndex) {
+					// push back current node
+					frontier.push(node);
+					
+					// iterate over frontier
+					int minDist = MAX_DISTANCE;
+					while (!frontier.isEmpty()) {
+						node = frontier.pop();
+						for (int goalNodeIndex : goalNodeIndices) {
+							int distNodeToGoal = game.getShortestPathDistance(node.nodeIndex, goalNodeIndex);
+							if (distNodeToGoal != -1) {
+								minDist = Math.min(minDist, node.depth + distNodeToGoal);
+							}
+						}
+					}
+					
+					return (float) minDist / MAX_DISTANCE;
+				}
+				
 				// test if any goal is reached
 				for (int goalNodeIndex : goalNodeIndices) {
 					if (node.nodeIndex == goalNodeIndex)
 						return (float) node.depth / MAX_DISTANCE;
 				}
-
+				
 				// don't expand further if depth limit is reached
 				if (node.depth == MAX_DISTANCE)
 					continue;
