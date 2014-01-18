@@ -6,7 +6,7 @@ import pacman.game.Game;
 
 public class NeuralNetworkController extends Controller<MOVE> {
 
-	private static final int[] topology = {9,15,1};
+	private static final int[] topology = {9,11,1};
 	private NeuralNetwork valueFunction;
 	
 	/**

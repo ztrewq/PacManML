@@ -32,15 +32,15 @@ public class FeatureUtils {
 		}
 		
 		float[] features = new float[9];
-		features[0] = getMinimumDistance(game, nodeIndex, move, game.getActivePillsIndices());
-		features[1] = getMinimumDistance(game, nodeIndex, move, game.getActivePowerPillsIndices());
-		features[2] = getMinimumDistance(game, nodeIndex, move, toPrimitiveArray(normalGhosts));
-		features[3] = getMinimumDistance(game, nodeIndex, move, toPrimitiveArray(edibleGhosts));
-		features[4] = getRemainingEdibleTime(game);
-		features[5] = getSavePathLength(game, nodeIndex, move);
-		features[6] = getRemainingNumberOfPills(game);
-		features[7] = getRemainingGameTime(game);
-		features[8] = move == game.getPacmanLastMoveMade().opposite() ? 1 : 0; // 1 if reversed
+		features[0] = getSavePathLength(game, nodeIndex, move);
+		features[1] = getMinimumDistance(game, nodeIndex, move, game.getActivePillsIndices());
+		features[2] = getMinimumDistance(game, nodeIndex, move, game.getActivePowerPillsIndices());
+		features[3] = getMinimumDistance(game, nodeIndex, move, toPrimitiveArray(normalGhosts));
+		features[4] = getMinimumDistance(game, nodeIndex, move, toPrimitiveArray(edibleGhosts));
+		features[5] = getRemainingNumberOfPills(game);
+		features[6] = move == game.getPacmanLastMoveMade().opposite() ? 1 : 0; // 1 if reversed
+		features[7] = getRemainingEdibleTime(game);
+		features[8] = getRemainingGameTime(game);
 		
 		return features;
 	}
@@ -158,7 +158,7 @@ public class FeatureUtils {
 		LinkedList<BFSNode> frontier = new LinkedList<BFSNode>();
 		frontier.add(new BFSNode(game.getNeighbour(nodeIndex, initialMove), nodeIndex, 0));
 		int maxDepth = 0;
-		int depthLimit = 160;
+		int depthLimit = 145;
 
 		// BFS
 		while (!frontier.isEmpty()) {

@@ -450,10 +450,10 @@ public class Executor
 	
 	private class Evaluator extends Thread {
 
-		Game game;
-		Controller<MOVE> pacmanController;
-		Controller<EnumMap<GHOST,MOVE>> ghostController;
-		AccumulatedScore accumulatedScore;
+		private Game game;
+		private Controller<MOVE> pacmanController;
+		private Controller<EnumMap<GHOST,MOVE>> ghostController;
+		private AccumulatedScore accumulatedScore;
 		
 		public Evaluator(Game game, Controller<MOVE> pacmanController, Controller<EnumMap<GHOST,MOVE>> ghostController, AccumulatedScore accumulatedScore) {
 			this.game = game;
