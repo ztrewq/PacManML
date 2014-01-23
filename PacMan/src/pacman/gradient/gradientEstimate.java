@@ -1,5 +1,9 @@
 package pacman.gradient;
 
+import pacman.Executor;
+import pacman.controllers.NeuralNetworkController;
+import pacman.controllers.examples.StarterGhosts;
+
 
 
 
@@ -15,18 +19,18 @@ public class gradientEstimate {
 	private float[] d = new float[maxK]; 	// delta theta for each k;
 	
 	
-	public Gradient FiniteDifferenceGradientEvaluation(float[] policy){
+	public Gradient FiniteDifferenceGradientEvaluation(float[] pol, Executor exe, NeuralNetworkController nnc, StarterGhosts starterGhosts, int numTrials){
+		float[] policy = pol;
 		Gradient grad = new Gradient(8);
 		for(int o = 0; o < policy.length; o++){
 			// TODO change to real function
-			float v0 = evaluateFunction();
+			float v0 = evaluateFunction(policy, exe, nnc, starterGhosts, numTrials);
 			j[0] = v0;
 			
 			for(int k = 1; k < maxK; k++){
 				d[k] = uniform(dMin, dMax);
-				updatePolicy(o, d[k]);
-				// TODO change to real function
-				float vk = evaluateFunction();
+				updatePolicy(policy, o, d[k]);
+				float vk = evaluateFunction(policy, exe, nnc, starterGhosts, numTrials);
 				j[k] = vk;
 			}
 			
@@ -56,7 +60,7 @@ public class gradientEstimate {
 
 	//updates the policy at position o by adding d,
 	//and checking it does not exceed 1
-	private void updatePolicy(int o, float d){
+	private void updatePolicy(float[] policy, int o, float d){
 		policy[o]+=d;
 		if(policy[o] > 1){
 			policy[o] = 1;
@@ -73,8 +77,8 @@ public class gradientEstimate {
 
 
 	//dummy function
-	private float evaluateFunction() {
-		// TODO Auto-generated method stub
-		return 60f;
+	private float evaluateFunction(float[] policy, Executor exe, NeuralNetworkController nnc, StarterGhosts gh, int numTrials) {
+		nnc.setValueFunctionCoefficients(policy);
+		return exe.evalPolicy(nnc, gh, numTrials);
 	}
 }

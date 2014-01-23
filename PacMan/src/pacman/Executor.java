@@ -34,6 +34,8 @@ import pacman.controllers.examples.StarterPacMan;
 import pacman.game.Game;
 import pacman.game.GameView;
 import pacman.game.Constants.MOVE;
+import pacman.gradient.Gradient;
+import pacman.gradient.gradientEstimate;
 import static pacman.game.Constants.*;
 
 /**
@@ -57,6 +59,13 @@ public class Executor
 		//policy evaluation averaging results from samples (x trials with same seed)
 		int numTrials=10;
 		float controllerScore = exec.evalPolicy(NeuralNetworkController.createFromFile("controller"), new StarterGhosts(), numTrials);
+		
+		
+		
+		//running policy gradient estimation
+		//exec.gradientEstimation(exec);
+		
+		
 		
 		/*
 		//run multiple games in batch mode - good for testing.
@@ -181,6 +190,18 @@ public class Executor
 	        if(visual)
 	        	gv.repaint();
 		}
+	}
+	
+	//gradient estimation
+	public void gradientEstimation(Executor exec){
+		int numTrials=10;
+		NeuralNetworkController nnc = NeuralNetworkController.createFromFile("controller");
+		Gradient grad;
+		gradientEstimate gr = new gradientEstimate();
+		float[] policy =  new float[]{0.1f,0.1f,0.1f,0.1f,0.1f,0.1f,0.1f,0.1f};
+		nnc.setValueFunctionCoefficients(policy);
+		grad = gr.FiniteDifferenceGradientEvaluation(policy, exec, nnc, new StarterGhosts(), numTrials);
+		grad.print();
 	}
 	
 	/**
