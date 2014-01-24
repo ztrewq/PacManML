@@ -3,7 +3,7 @@ package pacman.controllers;
 import pacman.game.Constants.MOVE;
 import pacman.game.Game;
 
-public class MyController extends ABController {
+public class MyController extends AController {
 
 	private LinearFunction valueFunction;
 	

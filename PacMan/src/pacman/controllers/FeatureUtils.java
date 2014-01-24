@@ -32,7 +32,7 @@ public class FeatureUtils {
 		}
 		
 		float[] features = new float[9];
-		features[0] = getSavePathLength(game, nodeIndex, move);
+		features[0] = getSavePathLength(game, nodeIndex, move, 90);
 		features[1] = getMinimumDistance(game, nodeIndex, move, game.getActivePillsIndices());
 		features[2] = getMinimumDistance(game, nodeIndex, move, game.getActivePowerPillsIndices());
 		features[3] = getMinimumDistance(game, nodeIndex, move, toPrimitiveArray(normalGhosts));
@@ -139,7 +139,7 @@ public class FeatureUtils {
 	/**
 	 * get the length of the longest save path
 	 */
-	private static float getSavePathLength(Game game, int nodeIndex, MOVE initialMove) {
+	private static float getSavePathLength(Game game, int nodeIndex, MOVE initialMove, int depthLimit) {
 		// for each living ghost get the path to next junction
 		EnumMap<GHOST, int[]> firstJunctionPaths = new EnumMap<GHOST, int[]>(GHOST.class);
 		for (GHOST ghost : GHOST.values()) {
@@ -158,7 +158,6 @@ public class FeatureUtils {
 		LinkedList<BFSNode> frontier = new LinkedList<BFSNode>();
 		frontier.add(new BFSNode(game.getNeighbour(nodeIndex, initialMove), nodeIndex, 0));
 		int maxDepth = 0;
-		int depthLimit = 145;
 
 		// BFS
 		while (!frontier.isEmpty()) {

@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.EnumMap;
 
 import pacman.Executor;
-import pacman.controllers.ABController;
+import pacman.controllers.AController;
 import pacman.controllers.Controller;
 import pacman.controllers.NeuralNetworkController;
 import pacman.controllers.examples.StarterGhosts;
@@ -19,14 +19,13 @@ public class gradientEstimate {
 	private final float dMin = 0.005f;  
 	private final float dMax = 0.1f;
 	private int decimals = 1000; //used to change the dMin and dMax values to an integer.
-	private float[] policy = {0,0,0,0,0,0,0,0};	//initial policy
 	
-	private int maxK = 16;					// max number of evaluations
+	private int maxK = 2;					// max number of evaluations
 	private float[] j = new float[maxK]; 	// evaluation for each k
 	private float[] d = new float[maxK]; 	// delta theta for each k;
 	
 	
-	public float[] FiniteDifferenceGradientEvaluation(ABController pacmanController, Controller<EnumMap<GHOST,MOVE>> ghostController, int numTrials) {
+	public float[] FiniteDifferenceGradientEvaluation(AController pacmanController, Controller<EnumMap<GHOST,MOVE>> ghostController, int numTrials) {
 		float[] policy = pacmanController.getCoefficients();
 		Gradient grad = new Gradient(policy.length);
 		for(int o = 0; o < policy.length; o++){

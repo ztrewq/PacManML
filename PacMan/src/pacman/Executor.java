@@ -15,7 +15,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import neuralNetwork.NeuralNetwork;
-import pacman.controllers.ABController;
+import pacman.controllers.AController;
 import pacman.controllers.Controller;
 import pacman.controllers.FeatureUtils;
 import pacman.controllers.HumanController;
@@ -60,7 +60,7 @@ public class Executor
 		StateValuePair[] svp = getStateValuePairs(loadReplay("replay"), NeuralNetwork.createFromFile("controller"));
 		float[] coefficients = getLinearRegressionCoefficients(svp);
 //		runGame(new MyController(coefficients), new StarterGhosts(), true, 20);
-		train(new MyController(coefficients), new StarterGhosts());
+		train(new MyController(coefficients), new StarterGhosts(), 20);
 		
 		//policy evaluation averaging results from samples (x trials with same seed)
 //		int numTrials=10;
@@ -105,12 +105,12 @@ public class Executor
 		 */
 	}
 	
-	public static void train(MyController pacManController,Controller<EnumMap<GHOST,MOVE>> ghostController) {
-		float eval = evalPolicy(pacManController, ghostController, 10);
+	public static void train(MyController pacManController,Controller<EnumMap<GHOST,MOVE>> ghostController, int numTrials) {
+		float eval = evalPolicy(pacManController, ghostController, numTrials);
 		System.out.println("evaluation before training: " + eval);
 		while (true) {
 			pacManController.setCoefficients(add(pacManController.getCoefficients(), gradientEstimation(pacManController, ghostController)));
-			eval = evalPolicy(pacManController, ghostController, 10);
+			eval = evalPolicy(pacManController, ghostController, numTrials);
 			System.out.println("new evaluation : " + eval);
 		}
 	}
@@ -122,8 +122,15 @@ public class Executor
 		return x;
 	}
 	
+	private static float[] applyLearningRates(float[] x) {
+		for (int i = 0; i < x.length; i++) {
+			x[i] *= 0.1f;
+		}
+		return x;
+	}
+	
 	//gradient estimation
-	public static float[] gradientEstimation(ABController pacManController,Controller<EnumMap<GHOST,MOVE>> ghostController) {
+	public static float[] gradientEstimation(AController pacManController,Controller<EnumMap<GHOST,MOVE>> ghostController) {
 		int numTrials=10;
 		Gradient grad;
 		gradientEstimate gr = new gradientEstimate();
