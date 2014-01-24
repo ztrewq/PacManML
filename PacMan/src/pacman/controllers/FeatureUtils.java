@@ -31,8 +31,8 @@ public class FeatureUtils {
 			}
 		}
 		
-		float[] features = new float[9];
-		features[0] = getSavePathLength(game, nodeIndex, move, 90);
+		float[] features = new float[10];
+		features[0] = getSavePathLength(game, nodeIndex, move, 135);
 		features[1] = getMinimumDistance(game, nodeIndex, move, game.getActivePillsIndices());
 		features[2] = getMinimumDistance(game, nodeIndex, move, game.getActivePowerPillsIndices());
 		features[3] = getMinimumDistance(game, nodeIndex, move, toPrimitiveArray(normalGhosts));
@@ -40,9 +40,29 @@ public class FeatureUtils {
 		features[5] = getRemainingNumberOfPills(game);
 		features[6] = move == game.getPacmanLastMoveMade().opposite() ? 1 : 0; // 1 if reversed
 		features[7] = getRemainingEdibleTime(game);
-		features[8] = getRemainingGameTime(game);
+		features[8] = getPillsInDirection(game, nodeIndex, move, 25);
+		features[9] = getJunctionDistance(game, nodeIndex, move);
 		
 		return features;
+	}
+	
+	public static float[] getExtendedFeatures(float[] features) {
+		float[] extendedFeatures = new float[19];
+		for (int i = 0; i < features.length; i++) {
+			extendedFeatures[i] = features[i];
+		}
+		
+		extendedFeatures[10] = (1 - features[4]) * features[7]; // ghost eating progress
+		extendedFeatures[11] = features[0] - features[9]; // safe path length after junction #
+		extendedFeatures[12] = features[3] - features[9]; // danger value #
+		extendedFeatures[13] = features[5] - features[8]; // possible eat progress
+		extendedFeatures[14] = features[3] - features[2]; // distance difference ghost powerPill
+		extendedFeatures[15] = features[0] - features[1];
+		extendedFeatures[16] = features[0] - features[2];
+		extendedFeatures[17] = features[0] - features[3];
+		extendedFeatures[18] = features[0] - features[4];
+		
+		return extendedFeatures;
 	}
 	
 	/**
@@ -55,6 +75,46 @@ public class FeatureUtils {
 	        integers[i++] = x;
 
 	    return integers;
+	}
+	
+	private static float getJunctionDistance(Game game, int nodeIndex, MOVE initialMove) {
+		if (game.getNeighbour(nodeIndex, initialMove) == -1)
+			throw new IllegalArgumentException("invalid move given");
+		
+		int[] pathToFirstJunction = getPathToJunction(game, game.getNeighbour(nodeIndex, initialMove), initialMove);
+		return (float) pathToFirstJunction.length / MAX_DISTANCE;
+	}
+	
+	/**
+	 * get the length of the longest save path
+	 */
+	private static float getPillsInDirection(Game game, int nodeIndex, MOVE initialMove, int depthLimit) {
+		// initialize BFS
+		LinkedList<BFSNode> frontier = new LinkedList<BFSNode>();
+		frontier.add(new BFSNode(game.getNeighbour(nodeIndex, initialMove), nodeIndex, 1));
+		
+		int pillsAndPowerPills = 0;
+		
+		// BFS
+		while (!frontier.isEmpty()) {
+			BFSNode node = frontier.pop();
+			
+			if (game.isPillStillAvailable(node.nodeIndex) || game.isPowerPillStillAvailable(node.nodeIndex))
+				pillsAndPowerPills++;
+			
+			if (node.depth == depthLimit)
+				continue;
+
+			// expand frontier with neighbor nodes
+			for (MOVE move : game.getPossibleMoves(node.nodeIndex)) {
+				int neighborNode = game.getNeighbour(node.nodeIndex, move);
+				if (neighborNode != node.preNodeIndex) {
+					frontier.add(new BFSNode(neighborNode, node.nodeIndex, node.depth + 1));
+				}
+			}
+		}
+		
+		return (float) pillsAndPowerPills / (game.getNumberOfPills() + game.getNumberOfPowerPills());
 	}
 	
 	/**

@@ -57,10 +57,11 @@ public class Executor
 	 */
 	public static void main(String[] args)
 	{
-		StateValuePair[] svp = getStateValuePairs(loadReplay("replay"), NeuralNetwork.createFromFile("controller"));
+		NeuralNetworkController nnc = NeuralNetworkController.createFromFile("controller");
+		StateValuePair[] svp = getStateValuePairs(loadReplay("replay"), nnc);
 		float[] coefficients = getLinearRegressionCoefficients(svp);
-//		runGame(new MyController(coefficients), new StarterGhosts(), true, 20);
-		train(new MyController(coefficients), new StarterGhosts(), 20);
+		runGame(new MyController(coefficients), new StarterGhosts(), true, 20);
+//		train(new MyController(coefficients), new StarterGhosts(), 20);
 		
 		//policy evaluation averaging results from samples (x trials with same seed)
 //		int numTrials=10;
@@ -137,7 +138,7 @@ public class Executor
 		return gr.FiniteDifferenceGradientEvaluation(pacManController, ghostController, numTrials);
 	}
 	
-	public static StateValuePair[] getStateValuePairs(ArrayList<String> replayStates, NeuralNetwork neuralNetwork) {
+	public static StateValuePair[] getStateValuePairs(ArrayList<String> replayStates, NeuralNetworkController neuralNetworkController) {
 		LinkedList<StateValuePair> stateValuePairList = new LinkedList<StateValuePair>();
 		
 		Game game=new Game(0);
@@ -146,7 +147,7 @@ public class Executor
 			int currentNode = game.getPacmanCurrentNodeIndex();
 			for (MOVE move : game.getPossibleMoves(game.getPacmanCurrentNodeIndex())) {
 				float[] features = FeatureUtils.getFeatures(game, currentNode, move);
-				float[] estimation = neuralNetwork.getOutput(features);
+				float[] estimation = new float[] {neuralNetworkController.getValueFunctionEstimation(features)};
 				stateValuePairList.add(new StateValuePair(features, estimation[0]));
 			}
 		}
