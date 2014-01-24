@@ -4,7 +4,7 @@ import neuralNetwork.NeuralNetwork;
 import pacman.game.Constants.MOVE;
 import pacman.game.Game;
 
-public class NeuralNetworkController extends Controller<MOVE> {
+public class NeuralNetworkController extends ABController {
 
 	private static final int[] topology = {9,11,1};
 	private NeuralNetwork valueFunction;
@@ -80,14 +80,14 @@ public class NeuralNetworkController extends Controller<MOVE> {
 	/**
 	 * get the coefficients used for the value function
 	 */
-	public float[] getValueFunctionCoefficients() {
+	public float[] getCoefficients() {
 		return valueFunction.getWeights();
 	}
 	
 	/**
 	 * set the coefficients used for the value function
 	 */
-	public void setValueFunctionCoefficients(float[] coefficients) {
+	public void setCoefficients(float[] coefficients) {
 		valueFunction = new NeuralNetwork(valueFunction.getTopology(), coefficients);
 	}
 

@@ -3,7 +3,7 @@ package pacman.controllers;
 import pacman.game.Constants.MOVE;
 import pacman.game.Game;
 
-public class MyController extends Controller<MOVE> {
+public class MyController extends ABController {
 
 	private LinearFunction valueFunction;
 	
@@ -49,14 +49,14 @@ public class MyController extends Controller<MOVE> {
 	/**
 	 * get the coefficients used for the value function
 	 */
-	public float[] getValueFunctionCoefficients() {
+	public float[] getCoefficients() {
 		return valueFunction.getCoefficients();
 	}
 	
 	/**
 	 * set the coefficients used for the value function
 	 */
-	public void setValueFunctionCoefficients(float[] coefficients) {
+	public void setCoefficients(float[] coefficients) {
 		valueFunction.setCoefficients(coefficients);
 	}
 

@@ -9,6 +9,10 @@ public class Gradient {
 	public void change(int i, float value){
 		values[i] = value;
 	}
+	
+	public float[] getValues() {
+		return values;
+	}
 
 	public void print() {
 		for(int i = 0;  i < values.length; i++){

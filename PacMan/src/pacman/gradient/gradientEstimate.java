@@ -1,8 +1,15 @@
 package pacman.gradient;
 
+import java.util.Arrays;
+import java.util.EnumMap;
+
 import pacman.Executor;
+import pacman.controllers.ABController;
+import pacman.controllers.Controller;
 import pacman.controllers.NeuralNetworkController;
 import pacman.controllers.examples.StarterGhosts;
+import pacman.game.Constants.GHOST;
+import pacman.game.Constants.MOVE;
 
 
 
@@ -19,24 +26,23 @@ public class gradientEstimate {
 	private float[] d = new float[maxK]; 	// delta theta for each k;
 	
 	
-	public Gradient FiniteDifferenceGradientEvaluation(float[] pol, Executor exe, NeuralNetworkController nnc, StarterGhosts starterGhosts, int numTrials){
-		float[] policy = pol;
-		Gradient grad = new Gradient(8);
+	public float[] FiniteDifferenceGradientEvaluation(ABController pacmanController, Controller<EnumMap<GHOST,MOVE>> ghostController, int numTrials) {
+		float[] policy = pacmanController.getCoefficients();
+		Gradient grad = new Gradient(policy.length);
 		for(int o = 0; o < policy.length; o++){
-			// TODO change to real function
-			float v0 = evaluateFunction(policy, exe, nnc, starterGhosts, numTrials);
+			float v0 = Executor.evalPolicy(pacmanController, ghostController, numTrials);
 			j[0] = v0;
 			
 			for(int k = 1; k < maxK; k++){
 				d[k] = uniform(dMin, dMax);
-				updatePolicy(policy, o, d[k]);
-				float vk = evaluateFunction(policy, exe, nnc, starterGhosts, numTrials);
+				pacmanController.setCoefficients(updatePolicy(policy, o, d[k]));
+				float vk = Executor.evalPolicy(pacmanController, ghostController, numTrials);
 				j[k] = vk;
 			}
 			
 			grad.change(o,estimateGradientComponent());
 		}
-		return grad;
+		return grad.getValues();
 	}
 	
 	
@@ -60,11 +66,10 @@ public class gradientEstimate {
 
 	//updates the policy at position o by adding d,
 	//and checking it does not exceed 1
-	private void updatePolicy(float[] policy, int o, float d){
+	private float[] updatePolicy(float[] policy, int o, float d){
+		policy = Arrays.copyOf(policy, policy.length);
 		policy[o]+=d;
-		if(policy[o] > 1){
-			policy[o] = 1;
-		}
+		return policy;
 	}
 
 
@@ -73,12 +78,5 @@ public class gradientEstimate {
 		float diff = (dMax*decimals)-(dMin*decimals); 	//getting the difference as Integer
 		int rand = (int)(Math.random()*diff); 			//random number
 		return ((float)(rand)/decimals)+dMin;			//dMin + random number between the difference of dMax&dMin
-	}
-
-
-	//dummy function
-	private float evaluateFunction(float[] policy, Executor exe, NeuralNetworkController nnc, StarterGhosts gh, int numTrials) {
-		nnc.setValueFunctionCoefficients(policy);
-		return exe.evalPolicy(nnc, gh, numTrials);
 	}
 }

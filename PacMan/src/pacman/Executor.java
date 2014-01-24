@@ -15,10 +15,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import neuralNetwork.NeuralNetwork;
+import pacman.controllers.ABController;
 import pacman.controllers.Controller;
 import pacman.controllers.FeatureUtils;
 import pacman.controllers.HumanController;
 import pacman.controllers.KeyBoardInput;
+import pacman.controllers.MyController;
 import pacman.controllers.NeuralNetworkController;
 import pacman.controllers.StateValuePair;
 import pacman.controllers.examples.AggressiveGhosts;
@@ -33,6 +35,7 @@ import pacman.controllers.examples.StarterGhosts;
 import pacman.controllers.examples.StarterPacMan;
 import pacman.game.Game;
 import pacman.game.GameView;
+import pacman.game.Constants.GHOST;
 import pacman.game.Constants.MOVE;
 import pacman.gradient.Gradient;
 import pacman.gradient.gradientEstimate;
@@ -54,18 +57,15 @@ public class Executor
 	 */
 	public static void main(String[] args)
 	{
-		Executor exec=new Executor();
+		StateValuePair[] svp = getStateValuePairs(loadReplay("replay"), NeuralNetwork.createFromFile("controller"));
+		float[] coefficients = getLinearRegressionCoefficients(svp);
+//		runGame(new MyController(coefficients), new StarterGhosts(), true, 20);
+		train(new MyController(coefficients), new StarterGhosts());
 		
 		//policy evaluation averaging results from samples (x trials with same seed)
-		int numTrials=10;
-		float controllerScore = exec.evalPolicy(NeuralNetworkController.createFromFile("controller"), new StarterGhosts(), numTrials);
-		
-		
-		
-		//running policy gradient estimation
-		//exec.gradientEstimation(exec);
-		
-		
+//		int numTrials=10;
+//		float controllerScore = exec.evalPolicy(NeuralNetworkController.createFromFile("controller"), new StarterGhosts(), numTrials);
+//		exec.runGame(NeuralNetworkController.createFromFile("controller"), new StarterGhosts(), true, 10);
 		
 		/*
 		//run multiple games in batch mode - good for testing.
@@ -105,7 +105,32 @@ public class Executor
 		 */
 	}
 	
-	public StateValuePair[] getStateValuePairs(ArrayList<String> replayStates, NeuralNetwork neuralNetwork) {
+	public static void train(MyController pacManController,Controller<EnumMap<GHOST,MOVE>> ghostController) {
+		float eval = evalPolicy(pacManController, ghostController, 10);
+		System.out.println("evaluation before training: " + eval);
+		while (true) {
+			pacManController.setCoefficients(add(pacManController.getCoefficients(), gradientEstimation(pacManController, ghostController)));
+			eval = evalPolicy(pacManController, ghostController, 10);
+			System.out.println("new evaluation : " + eval);
+		}
+	}
+	
+	private static float[] add(float[] x, float[] y) {
+		for (int i = 0; i < x.length; i++) {
+			x[i] += y[i];
+		}
+		return x;
+	}
+	
+	//gradient estimation
+	public static float[] gradientEstimation(ABController pacManController,Controller<EnumMap<GHOST,MOVE>> ghostController) {
+		int numTrials=10;
+		Gradient grad;
+		gradientEstimate gr = new gradientEstimate();
+		return gr.FiniteDifferenceGradientEvaluation(pacManController, ghostController, numTrials);
+	}
+	
+	public static StateValuePair[] getStateValuePairs(ArrayList<String> replayStates, NeuralNetwork neuralNetwork) {
 		LinkedList<StateValuePair> stateValuePairList = new LinkedList<StateValuePair>();
 		
 		Game game=new Game(0);
@@ -128,6 +153,31 @@ public class Executor
 		return stateValuePairs;
 	}
 	
+	public static float[] getLinearRegressionCoefficients(StateValuePair[] stateValuePairs) {
+		if (stateValuePairs.length == 0)
+			throw new IllegalArgumentException();
+		
+		float[] coefficients = new float[stateValuePairs[0].getState().length];
+		NeuralNetwork nn = new NeuralNetwork(new int[] {coefficients.length, 1});
+		
+		float[][] inputValues = new float[stateValuePairs.length][coefficients.length];
+		float[][] outputValues = new float[stateValuePairs.length][1];
+		
+		for (int i = 0; i < stateValuePairs.length; i++) {
+			inputValues[i] = stateValuePairs[i].getState();
+			outputValues[i][0] = stateValuePairs[i].getValue();
+		}
+		
+		nn.train(inputValues, outputValues, 1000);
+		float[] weights = nn.getWeights();
+		
+		for (int i = 0; i < coefficients.length; i++) {
+			coefficients[i] = weights[i+1];
+		}
+		
+		return coefficients;
+	}
+	
     /**
      * For running multiple games without visuals. This is useful to get a good idea of how well a controller plays
      * against a chosen opponent: the random nature of the game means that performance can vary from game to game. 
@@ -138,7 +188,7 @@ public class Executor
      * @param ghostController The Ghosts controller
      * @param trials The number of trials to be executed
      */
-    public void runExperiment(Controller<MOVE> pacManController,Controller<EnumMap<GHOST,MOVE>> ghostController,int trials)
+    public static void runExperiment(Controller<MOVE> pacManController,Controller<EnumMap<GHOST,MOVE>> ghostController,int trials)
     {
     	double avgScore=0;
     	
@@ -172,7 +222,7 @@ public class Executor
 	 * @param visual Indicates whether or not to use visuals
 	 * @param delay The delay between time-steps
 	 */
-	public void runGame(Controller<MOVE> pacManController,Controller<EnumMap<GHOST,MOVE>> ghostController,boolean visual,int delay)
+	public static void runGame(Controller<MOVE> pacManController,Controller<EnumMap<GHOST,MOVE>> ghostController,boolean visual,int delay)
 	{
 		Game game=new Game(0);
 
@@ -192,18 +242,6 @@ public class Executor
 		}
 	}
 	
-	//gradient estimation
-	public void gradientEstimation(Executor exec){
-		int numTrials=10;
-		NeuralNetworkController nnc = NeuralNetworkController.createFromFile("controller");
-		Gradient grad;
-		gradientEstimate gr = new gradientEstimate();
-		float[] policy =  new float[]{0.1f,0.1f,0.1f,0.1f,0.1f,0.1f,0.1f,0.1f};
-		nnc.setValueFunctionCoefficients(policy);
-		grad = gr.FiniteDifferenceGradientEvaluation(policy, exec, nnc, new StarterGhosts(), numTrials);
-		grad.print();
-	}
-	
 	/**
      * Run the game with time limit (asynchronous mode). This is how it will be done in the competition. 
      * Can be played with and without visual display of game states.
@@ -212,7 +250,7 @@ public class Executor
      * @param ghostController The Ghosts controller
 	 * @param visual Indicates whether or not to use visuals
      */
-    public void runGameTimed(Controller<MOVE> pacManController,Controller<EnumMap<GHOST,MOVE>> ghostController,boolean visual)
+    public static void runGameTimed(Controller<MOVE> pacManController,Controller<EnumMap<GHOST,MOVE>> ghostController,boolean visual)
 	{
 		Game game=new Game(0);
 		
@@ -260,7 +298,7 @@ public class Executor
      * @param fixedTime Whether or not to wait until 40ms are up even if both controllers already responded
 	 * @param visual Indicates whether or not to use visuals
      */
-    public void runGameTimedSpeedOptimised(Controller<MOVE> pacManController,Controller<EnumMap<GHOST,MOVE>> ghostController,boolean fixedTime,boolean visual)
+    public static void runGameTimedSpeedOptimised(Controller<MOVE> pacManController,Controller<EnumMap<GHOST,MOVE>> ghostController,boolean fixedTime,boolean visual)
  	{
  		Game game=new Game(0);
  		
@@ -321,7 +359,7 @@ public class Executor
      * @param visual Whether to run the game with visuals
 	 * @param fileName The file name of the file that saves the replay
 	 */
-	public void runGameTimedRecorded(Controller<MOVE> pacManController,Controller<EnumMap<GHOST,MOVE>> ghostController,boolean visual,String fileName)
+	public static void runGameTimedRecorded(Controller<MOVE> pacManController,Controller<EnumMap<GHOST,MOVE>> ghostController,boolean visual,String fileName)
 	{
 		StringBuilder replay=new StringBuilder();
 		
@@ -374,7 +412,7 @@ public class Executor
 	 * @param fileName The file name of the game to be played
 	 * @param visual Indicates whether or not to use visuals
 	 */
-	public void replayGame(String fileName,boolean visual)
+	public static void replayGame(String fileName,boolean visual)
 	{
 		ArrayList<String> timeSteps=loadReplay(fileName);
 		
@@ -448,7 +486,7 @@ public class Executor
         return replay;
 	}
 
-	public float evalPolicy(Controller<MOVE> policy, Controller<EnumMap<GHOST,MOVE>> ghostController, int trials) {
+	public static float evalPolicy(Controller<MOVE> policy, Controller<EnumMap<GHOST,MOVE>> ghostController, int trials) {
 		Random rnd=new Random(0);
 		Thread[] threads = new Thread[trials];
 		AccumulatedScore accumulatedScore = new AccumulatedScore();
@@ -469,8 +507,9 @@ public class Executor
 		return (float) accumulatedScore.getScore() / trials;
 	}
 	
-	private class Evaluator extends Thread {
+	private static class Evaluator extends Thread {
 
+		private static final int maxTimeSteps = 7500;
 		private Game game;
 		private Controller<MOVE> pacmanController;
 		private Controller<EnumMap<GHOST,MOVE>> ghostController;
@@ -485,15 +524,17 @@ public class Executor
 		
 		@Override
 		public void run() {
-			while(!game.gameOver()) {
-				game.advanceGame(pacmanController.getMove(game,System.currentTimeMillis()+DELAY), ghostController.getMove(game, System.currentTimeMillis()+DELAY));
+			int timeStep = 0;
+			while(!game.wasPacManEaten() && timeStep <= maxTimeSteps) {
+				game.advanceGame(pacmanController.getMove(game, -1), ghostController.getMove(game, -1));
+				timeStep++;
 			}
 			
 			accumulatedScore.addScore(game.getScore());
 		}
 	}
 
-	private class AccumulatedScore {
+	private static class AccumulatedScore {
 		
 		private int accumulatedScore;
 		
