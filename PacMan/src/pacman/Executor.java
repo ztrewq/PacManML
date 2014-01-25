@@ -17,7 +17,6 @@ import java.util.concurrent.TimeUnit;
 import neuralNetwork.NeuralNetwork;
 import pacman.controllers.AController;
 import pacman.controllers.Controller;
-import pacman.controllers.FeatureUtils;
 import pacman.controllers.HumanController;
 import pacman.controllers.KeyBoardInput;
 import pacman.controllers.MyController;
@@ -39,7 +38,10 @@ import pacman.game.Constants.GHOST;
 import pacman.game.Constants.MOVE;
 import pacman.gradient.Gradient;
 import pacman.gradient.gradientEstimate;
+import pacman.utils.FeatureUtils;
+import pacman.utils.Utils;
 import static pacman.game.Constants.*;
+import static pacman.utils.Utils.*;
 
 /**
  * This class may be used to execute the game in timed or un-timed modes, with or without
@@ -60,8 +62,8 @@ public class Executor
 		NeuralNetworkController nnc = NeuralNetworkController.createFromFile("controller");
 		StateValuePair[] svp = getStateValuePairs(loadReplay("replay"), nnc);
 		float[] coefficients = getLinearRegressionCoefficients(svp);
-		runGame(new MyController(coefficients), new StarterGhosts(), true, 20);
-//		train(new MyController(coefficients), new StarterGhosts(), 20);
+//		runGame(new MyController(coefficients), new StarterGhosts(), true, 10);
+		train(new MyController(coefficients), new StarterGhosts(), 10);
 		
 		//policy evaluation averaging results from samples (x trials with same seed)
 //		int numTrials=10;
@@ -107,27 +109,17 @@ public class Executor
 	}
 	
 	public static void train(MyController pacManController,Controller<EnumMap<GHOST,MOVE>> ghostController, int numTrials) {
-		float eval = evalPolicy(pacManController, ghostController, numTrials);
-		System.out.println("evaluation before training: " + eval);
+		System.out.println("evaluation before training: " + Utils.evalPolicy(pacManController, ghostController, numTrials));
+		
+		float learningRate = 0.02f;
+		float[] gradient = null;
 		while (true) {
-			pacManController.setCoefficients(add(pacManController.getCoefficients(), gradientEstimation(pacManController, ghostController)));
-			eval = evalPolicy(pacManController, ghostController, numTrials);
-			System.out.println("new evaluation : " + eval);
+			gradient = getGradient(pacManController, ghostController, numTrials);
+			pacManController.setCoefficients(normalize(add(normalize(pacManController.getCoefficients()), scale(normalize(gradient), learningRate))));
+			
+			System.out.println("new evaluation : " + Utils.evalPolicy(pacManController, ghostController, numTrials));
+//			learningRate *= 0.95f;
 		}
-	}
-	
-	private static float[] add(float[] x, float[] y) {
-		for (int i = 0; i < x.length; i++) {
-			x[i] += y[i];
-		}
-		return x;
-	}
-	
-	private static float[] applyLearningRates(float[] x) {
-		for (int i = 0; i < x.length; i++) {
-			x[i] *= 0.1f;
-		}
-		return x;
 	}
 	
 	//gradient estimation
@@ -492,71 +484,6 @@ public class Executor
         }
         
         return replay;
-	}
-
-	public static float evalPolicy(Controller<MOVE> policy, Controller<EnumMap<GHOST,MOVE>> ghostController, int trials) {
-		Random rnd=new Random(0);
-		Thread[] threads = new Thread[trials];
-		AccumulatedScore accumulatedScore = new AccumulatedScore();
-		
-		for (int i = 0; i < trials; i++) {
-			threads[i] = new Evaluator(new Game(rnd.nextLong()), policy, ghostController, accumulatedScore);
-			threads[i].start();
-		}
-		
-		for (Thread thread : threads) {
-			try {
-				thread.join();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
-		
-		return (float) accumulatedScore.getScore() / trials;
-	}
-	
-	private static class Evaluator extends Thread {
-
-		private static final int maxTimeSteps = 7500;
-		private Game game;
-		private Controller<MOVE> pacmanController;
-		private Controller<EnumMap<GHOST,MOVE>> ghostController;
-		private AccumulatedScore accumulatedScore;
-		
-		public Evaluator(Game game, Controller<MOVE> pacmanController, Controller<EnumMap<GHOST,MOVE>> ghostController, AccumulatedScore accumulatedScore) {
-			this.game = game;
-			this.pacmanController = pacmanController;
-			this.ghostController = ghostController;
-			this.accumulatedScore = accumulatedScore;
-		}
-		
-		@Override
-		public void run() {
-			int timeStep = 0;
-			while(!game.wasPacManEaten() && timeStep <= maxTimeSteps) {
-				game.advanceGame(pacmanController.getMove(game, -1), ghostController.getMove(game, -1));
-				timeStep++;
-			}
-			
-			accumulatedScore.addScore(game.getScore());
-		}
-	}
-
-	private static class AccumulatedScore {
-		
-		private int accumulatedScore;
-		
-		public AccumulatedScore() {
-			accumulatedScore = 0;
-		}
-		
-		public synchronized void addScore(int score) {
-			accumulatedScore += score;
-		}
-		
-		public int getScore() {
-			return accumulatedScore;
-		}
 	}
 		
 }

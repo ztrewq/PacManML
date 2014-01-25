@@ -3,6 +3,7 @@ package pacman.controllers;
 import neuralNetwork.NeuralNetwork;
 import pacman.game.Constants.MOVE;
 import pacman.game.Game;
+import pacman.utils.FeatureUtils;
 
 public class NeuralNetworkController extends AController {
 

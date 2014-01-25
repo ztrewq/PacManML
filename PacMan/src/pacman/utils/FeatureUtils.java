@@ -1,4 +1,4 @@
-package pacman.controllers;
+package pacman.utils;
 
 import static pacman.game.Constants.EAT_DISTANCE;
 
@@ -32,7 +32,7 @@ public class FeatureUtils {
 		}
 		
 		float[] features = new float[10];
-		features[0] = getSavePathLength(game, nodeIndex, move, 135);
+		features[0] = getSavePathLength(game, nodeIndex, move, 125);
 		features[1] = getMinimumDistance(game, nodeIndex, move, game.getActivePillsIndices());
 		features[2] = getMinimumDistance(game, nodeIndex, move, game.getActivePowerPillsIndices());
 		features[3] = getMinimumDistance(game, nodeIndex, move, toPrimitiveArray(normalGhosts));

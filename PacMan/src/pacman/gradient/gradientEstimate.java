@@ -3,15 +3,11 @@ package pacman.gradient;
 import java.util.Arrays;
 import java.util.EnumMap;
 
-import pacman.Executor;
 import pacman.controllers.AController;
 import pacman.controllers.Controller;
-import pacman.controllers.NeuralNetworkController;
-import pacman.controllers.examples.StarterGhosts;
 import pacman.game.Constants.GHOST;
 import pacman.game.Constants.MOVE;
-
-
+import static pacman.utils.Utils.*;
 
 
 public class gradientEstimate {
@@ -29,13 +25,13 @@ public class gradientEstimate {
 		float[] policy = pacmanController.getCoefficients();
 		Gradient grad = new Gradient(policy.length);
 		for(int o = 0; o < policy.length; o++){
-			float v0 = Executor.evalPolicy(pacmanController, ghostController, numTrials);
+			float v0 = evalPolicy(pacmanController, ghostController, numTrials);
 			j[0] = v0;
 			
 			for(int k = 1; k < maxK; k++){
 				d[k] = uniform(dMin, dMax);
 				pacmanController.setCoefficients(updatePolicy(policy, o, d[k]));
-				float vk = Executor.evalPolicy(pacmanController, ghostController, numTrials);
+				float vk = evalPolicy(pacmanController, ghostController, numTrials);
 				j[k] = vk;
 			}
 			

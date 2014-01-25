@@ -2,6 +2,7 @@ package pacman.controllers;
 
 import pacman.game.Constants.MOVE;
 import pacman.game.Game;
+import pacman.utils.FeatureUtils;
 
 public class MyController extends AController {
 
