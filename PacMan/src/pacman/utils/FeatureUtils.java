@@ -1,18 +1,18 @@
 package pacman.utils;
 
 import static pacman.game.Constants.EAT_DISTANCE;
-
 import java.util.EnumMap;
 import java.util.LinkedList;
-
 import pacman.game.Constants;
 import pacman.game.Game;
 import pacman.game.Constants.GHOST;
 import pacman.game.Constants.MOVE;
 
+
 public class FeatureUtils {
 
 	private static final int MAX_DISTANCE = 221;
+	
 	
 	/**
 	 * get the features vector relative to nodeIndex and move
@@ -32,7 +32,7 @@ public class FeatureUtils {
 		}
 		
 		float[] features = new float[10];
-		features[0] = getSavePathLength(game, nodeIndex, move, 125);
+		features[0] = getSavePathLength(game, nodeIndex, move, 100);
 		features[1] = getMinimumDistance(game, nodeIndex, move, game.getActivePillsIndices());
 		features[2] = getMinimumDistance(game, nodeIndex, move, game.getActivePowerPillsIndices());
 		features[3] = getMinimumDistance(game, nodeIndex, move, toPrimitiveArray(normalGhosts));
@@ -40,13 +40,13 @@ public class FeatureUtils {
 		features[5] = getRemainingNumberOfPills(game);
 		features[6] = move == game.getPacmanLastMoveMade().opposite() ? 1 : 0; // 1 if reversed
 		features[7] = getRemainingEdibleTime(game);
-		features[8] = getPillsInDirection(game, nodeIndex, move, 25);
+		features[8] = getPillsInDirection(game, nodeIndex, move);
 		features[9] = getJunctionDistance(game, nodeIndex, move);
 		
 		return features;
 	}
 	
-	public static float[] getExtendedFeatures(float[] features) {
+	public static float[] extendFeatures(float[] features) {
 		float[] extendedFeatures = new float[19];
 		for (int i = 0; i < features.length; i++) {
 			extendedFeatures[i] = features[i];
@@ -76,7 +76,10 @@ public class FeatureUtils {
 
 	    return integers;
 	}
-	
+		
+	/**
+	 * get the distance to the next junction in the given direction
+	 */
 	private static float getJunctionDistance(Game game, int nodeIndex, MOVE initialMove) {
 		if (game.getNeighbour(nodeIndex, initialMove) == -1)
 			throw new IllegalArgumentException("invalid move given");
@@ -85,36 +88,17 @@ public class FeatureUtils {
 		return (float) pathToFirstJunction.length / MAX_DISTANCE;
 	}
 	
-	/**
-	 * get the length of the longest save path
-	 */
-	private static float getPillsInDirection(Game game, int nodeIndex, MOVE initialMove, int depthLimit) {
-		// initialize BFS
-		LinkedList<BFSNode> frontier = new LinkedList<BFSNode>();
-		frontier.add(new BFSNode(game.getNeighbour(nodeIndex, initialMove), nodeIndex, 1));
-		
-		int pillsAndPowerPills = 0;
-		
-		// BFS
-		while (!frontier.isEmpty()) {
-			BFSNode node = frontier.pop();
-			
-			if (game.isPillStillAvailable(node.nodeIndex) || game.isPowerPillStillAvailable(node.nodeIndex))
-				pillsAndPowerPills++;
-			
-			if (node.depth == depthLimit)
-				continue;
-
-			// expand frontier with neighbor nodes
-			for (MOVE move : game.getPossibleMoves(node.nodeIndex)) {
-				int neighborNode = game.getNeighbour(node.nodeIndex, move);
-				if (neighborNode != node.preNodeIndex) {
-					frontier.add(new BFSNode(neighborNode, node.nodeIndex, node.depth + 1));
-				}
-			}
+	private static float getPillsInDirection(Game game, int nodeIndex, MOVE initialMove) {
+		int[] pathToJunction = getPathToJunction(game, nodeIndex, initialMove);
+		int pills = 0;
+		for (int node : pathToJunction) {
+			int pillIndex = game.getPillIndex(node);
+			int powerPillIndex = game.getPowerPillIndex(node);
+			if (pillIndex != -1 && game.isPillStillAvailable(pillIndex) || powerPillIndex != -1 && game.isPowerPillStillAvailable(powerPillIndex))
+				pills++;
 		}
 		
-		return (float) pillsAndPowerPills / (game.getNumberOfPills() + game.getNumberOfPowerPills());
+		return (float) pills / (game.getNumberOfPills() + game.getNumberOfPowerPills());
 	}
 	
 	/**
@@ -222,9 +206,9 @@ public class FeatureUtils {
 		// BFS
 		while (!frontier.isEmpty()) {
 			BFSNode node = frontier.pop();
-
+			
 			// continue if node is not safely reachable
-			if (reachableByGhost(game, node.nodeIndex, node.depth + EAT_DISTANCE, firstJunctionPaths))
+			if (reachableByGhost(game, node.nodeIndex, node.depth + EAT_DISTANCE + 1, firstJunctionPaths))
 				continue;
 			
 			// don't expand further if depth limit is reached
@@ -250,13 +234,6 @@ public class FeatureUtils {
 	 */
 	private static float getRemainingNumberOfPills(Game game) {
 		return (float) (game.getNumberOfActivePills() + game.getNumberOfActivePowerPills()) / (game.getNumberOfPills() + game.getNumberOfPowerPills());
-	}
-	
-	/**
-	 * get the scaled (0 to 1) remaining game time
-	 */
-	private static float getRemainingGameTime(Game game) {
-		return (float) (Constants.LEVEL_LIMIT - game.getCurrentLevelTime()) / Constants.LEVEL_LIMIT;
 	}
 
 	/**

@@ -7,7 +7,7 @@ import pacman.utils.FeatureUtils;
 
 public class NeuralNetworkController extends AController {
 
-	private static final int[] topology = {10,20,20,1};
+	private static final int[] topology = {10,30,1};
 	private NeuralNetwork valueFunction;
 	
 	/**

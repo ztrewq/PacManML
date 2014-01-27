@@ -22,16 +22,18 @@ public class Utils {
 		int runs = 16;
 		float[][] coeffVariations = new float[runs][];
 		float[][] coeffEvaluations = new float[runs][1];
-		
 		for (int i = 0; i < runs; i++) {
 			coeffVariations[i] = add(copy(initialCoefficients), getRandomVector(initialCoefficients.length, 0, 0.05f));
 			pacmanController.setCoefficients(coeffVariations[i]);
 			coeffEvaluations[i][0] = evalPolicy(pacmanController, ghostController, numTrials) - initialEvaluation;
 		}
 		
+		pacmanController.setCoefficients(initialCoefficients);
+		
 		Matrix theta = new Matrix(getDoubles(coeffVariations));
 		Matrix j = new Matrix(getDoubles(coeffEvaluations));
 		Matrix g = (((((theta.transpose()).times(theta)).inverse()).times(theta.transpose())).times(j));
+		
 		return getFloats(g.getColumnPackedCopy());
 	}
 	

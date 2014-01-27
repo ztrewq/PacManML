@@ -42,6 +42,7 @@ import pacman.utils.FeatureUtils;
 import pacman.utils.Utils;
 import static pacman.game.Constants.*;
 import static pacman.utils.Utils.*;
+import static pacman.utils.FeatureUtils.extendFeatures;
 
 /**
  * This class may be used to execute the game in timed or un-timed modes, with or without
@@ -61,7 +62,8 @@ public class Executor
 	{
 		NeuralNetworkController nnc = NeuralNetworkController.createFromFile("controller");
 		StateValuePair[] svp = getStateValuePairs(loadReplay("replay"), nnc);
-		float[] coefficients = getLinearRegressionCoefficients(svp);
+		StateValuePair[] esvp = extendStateValuePairs(svp);
+		float[] coefficients = getLinearRegressionCoefficients(esvp);
 //		runGame(new MyController(coefficients), new StarterGhosts(), true, 10);
 		train(new MyController(coefficients), new StarterGhosts(), 10);
 		
@@ -109,16 +111,26 @@ public class Executor
 	}
 	
 	public static void train(MyController pacManController,Controller<EnumMap<GHOST,MOVE>> ghostController, int numTrials) {
+		GameView gameView = new GameView(new Game(0)).showGame();
 		System.out.println("evaluation before training: " + Utils.evalPolicy(pacManController, ghostController, numTrials));
 		
-		float learningRate = 0.02f;
+		float learningRate = (float)1e-9;
 		float[] gradient = null;
 		while (true) {
+			// train
 			gradient = getGradient(pacManController, ghostController, numTrials);
-			pacManController.setCoefficients(normalize(add(normalize(pacManController.getCoefficients()), scale(normalize(gradient), learningRate))));
-			
+			pacManController.setCoefficients(normalize(add(normalize(pacManController.getCoefficients()), scale(gradient, learningRate))));
 			System.out.println("new evaluation : " + Utils.evalPolicy(pacManController, ghostController, numTrials));
-//			learningRate *= 0.95f;
+//			learningRate *= 0.95f;			
+			
+			// demonstrate controller 
+			Game game = new Game(System.currentTimeMillis());
+			gameView.setGame(game);
+			while(!game.gameOver()) {
+				game.advanceGame(pacManController.getMove(game, -1), ghostController.getMove(game,-1));
+		        try{Thread.sleep(10);}catch(Exception e){}
+		        gameView.repaint();
+			}
 		}
 	}
 	
@@ -153,6 +165,16 @@ public class Executor
 		return stateValuePairs;
 	}
 	
+	public static StateValuePair[] extendStateValuePairs(StateValuePair[] stateValuePairs) {
+		StateValuePair[] extendedStateValuePairs = new StateValuePair[stateValuePairs.length];
+		int i = 0;
+		for (StateValuePair svp : stateValuePairs) {
+			extendedStateValuePairs[i++] = new StateValuePair(extendFeatures(svp.getState()), svp.getValue());
+		}
+		
+		return extendedStateValuePairs;
+	}
+	
 	public static float[] getLinearRegressionCoefficients(StateValuePair[] stateValuePairs) {
 		if (stateValuePairs.length == 0)
 			throw new IllegalArgumentException();
@@ -168,7 +190,7 @@ public class Executor
 			outputValues[i][0] = stateValuePairs[i].getValue();
 		}
 		
-		nn.train(inputValues, outputValues, 1000);
+		nn.train(inputValues, outputValues, 2500);
 		float[] weights = nn.getWeights();
 		
 		for (int i = 0; i < coefficients.length; i++) {

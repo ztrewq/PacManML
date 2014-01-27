@@ -2,7 +2,7 @@ package pacman.controllers;
 
 import pacman.game.Constants.MOVE;
 import pacman.game.Game;
-import pacman.utils.FeatureUtils;
+import static pacman.utils.FeatureUtils.*;
 
 public class MyController extends AController {
 
@@ -25,11 +25,11 @@ public class MyController extends AController {
 		
 		if (game.getNeighbour(currentNode, lastMove) != -1) {
 			bestMove = lastMove;
-			bestMoveValueEstimation = getValueFunctionEstimation(FeatureUtils.getFeatures(game, currentNode, lastMove));
+			bestMoveValueEstimation = getValueFunctionEstimation(extendFeatures(getFeatures(game, currentNode, lastMove)));
 		}
 		
 		for (MOVE move : game.getPossibleMoves(game.getPacmanCurrentNodeIndex())) {
-			float[] features = FeatureUtils.getFeatures(game, game.getPacmanCurrentNodeIndex(), move);
+			float[] features = extendFeatures(getFeatures(game, game.getPacmanCurrentNodeIndex(), move));
 			float estimation = getValueFunctionEstimation(features);
 			if (bestMoveValueEstimation < estimation) {
 				bestMoveValueEstimation = estimation;
