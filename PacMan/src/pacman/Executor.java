@@ -21,6 +21,7 @@ import pacman.controllers.HumanController;
 import pacman.controllers.KeyBoardInput;
 import pacman.controllers.MyController;
 import pacman.controllers.NeuralNetworkController;
+import pacman.controllers.RBFController;
 import pacman.controllers.StateValuePair;
 import pacman.controllers.examples.AggressiveGhosts;
 import pacman.controllers.examples.Legacy;
@@ -57,8 +58,9 @@ public class Executor
 	 * The main method. Several options are listed - simply remove comments to use the option you want.
 	 *
 	 * @param args the command line arguments
+	 * @throws IOException 
 	 */
-	public static void main(String[] args)
+	public static void main(String[] args) throws IOException
 	{
 		NeuralNetworkController nnc = NeuralNetworkController.createFromFile("controller");
 		StateValuePair[] svp = getStateValuePairs(loadReplay("replay"), nnc);
@@ -67,6 +69,9 @@ public class Executor
 //		runGame(new MyController(coefficients), new StarterGhosts(), true, 10);
 		train(new MyController(coefficients), new StarterGhosts(), 10);
 		
+		RBFController rbfc = new RBFController("rbfcontroller");
+		rbfc.trainNetwork();
+
 		//policy evaluation averaging results from samples (x trials with same seed)
 //		int numTrials=10;
 //		float controllerScore = exec.evalPolicy(NeuralNetworkController.createFromFile("controller"), new StarterGhosts(), numTrials);
