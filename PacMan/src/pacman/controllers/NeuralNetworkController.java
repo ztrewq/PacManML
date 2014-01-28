@@ -10,9 +10,6 @@ public class NeuralNetworkController extends AController {
 	private static final int[] topology = {10,30,1};
 	private NeuralNetwork valueFunction;
 	
-	/**
-	 * create a new controller
-	 */
 	public NeuralNetworkController() {
 		valueFunction = new NeuralNetwork(topology);
 	}
@@ -42,16 +39,10 @@ public class NeuralNetworkController extends AController {
 		return bestMove;
 	}
 	
-	/**
-	 * write this controller to a file
-	 */
 	public void writeToFile(String file) {
 		valueFunction.saveToFile(file);
 	}
 	
-	/**
-	 * create a new controller from a file. returns null if the file is invalid or not existent
-	 */
 	public static NeuralNetworkController createFromFile(String file) {
 		NeuralNetwork valueFunction = NeuralNetwork.createFromFile(file);
 		if (valueFunction != null) {
@@ -71,25 +62,16 @@ public class NeuralNetworkController extends AController {
 		return null;
 	}
 	
-	/**
-	 * get the value estimation for the given state
-	 */
 	public float getValueFunctionEstimation(float[] input) {
 		return valueFunction.getOutput(input)[0];
 	}
 	
-	/**
-	 * get the coefficients used for the value function
-	 */
-	public float[] getCoefficients() {
+	public float[] getPolicyParameters() {
 		return valueFunction.getWeights();
 	}
 	
-	/**
-	 * set the coefficients used for the value function
-	 */
-	public void setCoefficients(float[] coefficients) {
-		valueFunction = new NeuralNetwork(valueFunction.getTopology(), coefficients);
+	public void setPolicyParameters(float[] parameters) {
+		valueFunction = new NeuralNetwork(valueFunction.getTopology(), parameters);
 	}
 
 }

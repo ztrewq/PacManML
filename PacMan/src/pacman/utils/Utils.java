@@ -16,7 +16,7 @@ public class Utils {
 	 * get the policy gradient of the current pacmanController using finite-difference
 	 */
 	public static float[] getGradient(AController pacmanController, Controller<EnumMap<GHOST,MOVE>> ghostController, int numTrials) {
-		float[] initialCoefficients = normalize(pacmanController.getCoefficients());
+		float[] initialCoefficients = normalize(pacmanController.getPolicyParameters());
 		float initialEvaluation = evalPolicy(pacmanController, ghostController, numTrials);
 		
 		int runs = 16;
@@ -24,11 +24,11 @@ public class Utils {
 		float[][] coeffEvaluations = new float[runs][1];
 		for (int i = 0; i < runs; i++) {
 			coeffVariations[i] = add(copy(initialCoefficients), getRandomVector(initialCoefficients.length, 0, 0.05f));
-			pacmanController.setCoefficients(coeffVariations[i]);
+			pacmanController.setPolicyParameters(coeffVariations[i]);
 			coeffEvaluations[i][0] = evalPolicy(pacmanController, ghostController, numTrials) - initialEvaluation;
 		}
 		
-		pacmanController.setCoefficients(initialCoefficients);
+		pacmanController.setPolicyParameters(initialCoefficients);
 		
 		Matrix theta = new Matrix(getDoubles(coeffVariations));
 		Matrix j = new Matrix(getDoubles(coeffEvaluations));

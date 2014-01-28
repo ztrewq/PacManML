@@ -7,8 +7,8 @@ public abstract class AController extends Controller<MOVE>{
 
 	public abstract MOVE getMove(Game game, long timeDue);
 	
-	public abstract float[] getCoefficients();
+	public abstract float[] getPolicyParameters();
 	
-	public abstract void setCoefficients(float[] coefficients);
+	public abstract void setPolicyParameters(float[] parameters);
 	
 }

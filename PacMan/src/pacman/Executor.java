@@ -21,7 +21,7 @@ import pacman.controllers.HumanController;
 import pacman.controllers.KeyBoardInput;
 import pacman.controllers.MyController;
 import pacman.controllers.NeuralNetworkController;
-import pacman.controllers.RBFController;
+//import pacman.controllers.RBFController;
 import pacman.controllers.StateValuePair;
 import pacman.controllers.examples.AggressiveGhosts;
 import pacman.controllers.examples.Legacy;
@@ -62,15 +62,15 @@ public class Executor
 	 */
 	public static void main(String[] args) throws IOException
 	{
-		NeuralNetworkController nnc = NeuralNetworkController.createFromFile("controller");
+		NeuralNetworkController nnc = NeuralNetworkController.createFromFile("neurocontroller");
 		StateValuePair[] svp = getStateValuePairs(loadReplay("replay"), nnc);
 		StateValuePair[] esvp = extendStateValuePairs(svp);
 		float[] coefficients = getLinearRegressionCoefficients(esvp);
-//		runGame(new MyController(coefficients), new StarterGhosts(), true, 10);
-		train(new MyController(coefficients), new StarterGhosts(), 10);
+		runGame(nnc, new StarterGhosts(), true, 10);
+//		train(new MyController(coefficients), new StarterGhosts(), 10);
 		
-		RBFController rbfc = new RBFController("rbfcontroller");
-		rbfc.trainNetwork();
+//		RBFController rbfc = new RBFController("rbfcontroller");
+//		rbfc.trainNetwork();
 
 		//policy evaluation averaging results from samples (x trials with same seed)
 //		int numTrials=10;
@@ -124,7 +124,7 @@ public class Executor
 		while (true) {
 			// train
 			gradient = getGradient(pacManController, ghostController, numTrials);
-			pacManController.setCoefficients(normalize(add(normalize(pacManController.getCoefficients()), scale(gradient, learningRate))));
+			pacManController.setPolicyParameters(normalize(add(normalize(pacManController.getPolicyParameters()), scale(gradient, learningRate))));
 			System.out.println("new evaluation : " + Utils.evalPolicy(pacManController, ghostController, numTrials));
 //			learningRate *= 0.95f;			
 			

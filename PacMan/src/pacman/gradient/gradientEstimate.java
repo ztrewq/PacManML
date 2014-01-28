@@ -22,7 +22,7 @@ public class gradientEstimate {
 	
 	
 	public float[] FiniteDifferenceGradientEvaluation(AController pacmanController, Controller<EnumMap<GHOST,MOVE>> ghostController, int numTrials) {
-		float[] policy = pacmanController.getCoefficients();
+		float[] policy = pacmanController.getPolicyParameters();
 		Gradient grad = new Gradient(policy.length);
 		for(int o = 0; o < policy.length; o++){
 			float v0 = evalPolicy(pacmanController, ghostController, numTrials);
@@ -30,7 +30,7 @@ public class gradientEstimate {
 			
 			for(int k = 1; k < maxK; k++){
 				d[k] = uniform(dMin, dMax);
-				pacmanController.setCoefficients(updatePolicy(policy, o, d[k]));
+				pacmanController.setPolicyParameters(updatePolicy(policy, o, d[k]));
 				float vk = evalPolicy(pacmanController, ghostController, numTrials);
 				j[k] = vk;
 			}
