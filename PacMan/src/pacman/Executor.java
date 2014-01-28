@@ -21,7 +21,7 @@ import pacman.controllers.HumanController;
 import pacman.controllers.KeyBoardInput;
 import pacman.controllers.MyController;
 import pacman.controllers.NeuralNetworkController;
-//import pacman.controllers.RBFController;
+import pacman.controllers.RBFController;
 import pacman.controllers.StateValuePair;
 import pacman.controllers.examples.AggressiveGhosts;
 import pacman.controllers.examples.Legacy;
@@ -63,14 +63,14 @@ public class Executor
 	public static void main(String[] args) throws IOException
 	{
 		NeuralNetworkController nnc = NeuralNetworkController.createFromFile("neurocontroller");
-		StateValuePair[] svp = getStateValuePairs(loadReplay("replay"), nnc);
-		StateValuePair[] esvp = extendStateValuePairs(svp);
-		float[] coefficients = getLinearRegressionCoefficients(esvp);
-		runGame(nnc, new StarterGhosts(), true, 10);
+//		StateValuePair[] svp = getStateValuePairs(loadReplay("replay"), nnc);
+//		StateValuePair[] esvp = extendStateValuePairs(svp);
+//		float[] coefficients = getLinearRegressionCoefficients(esvp);
+//		runGame(nnc, new StarterGhosts(), true, 10);
 //		train(new MyController(coefficients), new StarterGhosts(), 10);
 		
-//		RBFController rbfc = new RBFController("rbfcontroller");
-//		rbfc.trainNetwork();
+		RBFController rbfc = new RBFController("rbfcontroller");
+//		rbfc.trainNetwork(); // training.csv wird nicht gefunden
 
 		//policy evaluation averaging results from samples (x trials with same seed)
 //		int numTrials=10;
