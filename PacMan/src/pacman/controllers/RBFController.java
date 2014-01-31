@@ -84,15 +84,17 @@ public class RBFController extends AController {
                 }
         }
         
-        public void trainNetwork() throws IOException {
-                MLDataSet trainingD = getTrainingData("training.csv");
-                final ResilientPropagation train = new ResilientPropagation(rbfnet,trainingD);
-                
-                train.iteration();
-                System.out.println(train.getError());
-                int epoch = 1;
-                int epochSave = 1;
-                while (train.getError() > 0.1) {
+        public void trainNetwork(String csvfile) throws IOException {
+        		File f = new File(csvfile);
+        		if (f.isFile()) {
+        			MLDataSet trainingD = getTrainingData("training.csv");
+        			final ResilientPropagation train = new ResilientPropagation(rbfnet,trainingD);
+        			
+        			train.iteration();
+        			System.out.println(train.getError());
+        			int epoch = 1;
+        			int epochSave = 1;
+        			while (train.getError() > 0.1) {
                         train.iteration();
                         System.out.println("Iteration: " + epoch + " Error: "+train.getError());
                         epoch++;
@@ -100,8 +102,9 @@ public class RBFController extends AController {
                                 saveNetwork();
                                 epochSave = epoch;
                         }
-                }
-                saveNetwork();
+        			}
+        		}
+        			saveNetwork();
         }
         
         public static void saveNetwork() {

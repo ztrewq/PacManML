@@ -70,7 +70,7 @@ public class Executor
 //		train(new MyController(coefficients), new StarterGhosts(), 10);
 		
 		RBFController rbfc = new RBFController("rbfcontroller");
-//		rbfc.trainNetwork(); // training.csv wird nicht gefunden
+		rbfc.trainNetwork("training.csv"); // training.csv wird nicht gefunden
 
 		//policy evaluation averaging results from samples (x trials with same seed)
 //		int numTrials=10;
