@@ -7,7 +7,7 @@ import pacman.utils.FeatureUtils;
 
 public class NeuralNetworkController extends AController {
 
-	private static final int[] topology = {11,35,1};
+	private static final int[] topology = {12,35,1};
 	private NeuralNetwork valueFunction;
 	
 	public NeuralNetworkController() {
@@ -72,6 +72,13 @@ public class NeuralNetworkController extends AController {
 	
 	public void setPolicyParameters(float[] parameters) {
 		valueFunction = new NeuralNetwork(valueFunction.getTopology(), parameters);
+	}
+
+	@Override
+	public AController copy() {
+		NeuralNetworkController nnc = new NeuralNetworkController();
+		nnc.valueFunction = new NeuralNetwork(valueFunction.getTopology(), valueFunction.getWeights());
+		return nnc;
 	}
 
 }

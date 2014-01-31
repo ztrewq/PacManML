@@ -6,6 +6,8 @@ import java.util.Random;
 import Jama.Matrix;
 import pacman.controllers.AController;
 import pacman.controllers.Controller;
+import pacman.controllers.NeuralNetworkController;
+import pacman.controllers.examples.StarterGhosts;
 import pacman.game.Game;
 import pacman.game.Constants.GHOST;
 import pacman.game.Constants.MOVE;
@@ -15,9 +17,9 @@ public class Utils {
 	/**
 	 * get the policy gradient of the current pacmanController using finite-difference
 	 */
-	public static float[] getGradient(AController pacmanController, Controller<EnumMap<GHOST,MOVE>> ghostController, int numTrials) {
+	public static float[] getGradient(AController pacmanController, int numTrials) {
 		float[] initialCoefficients = normalize(pacmanController.getPolicyParameters());
-		float initialEvaluation = evalPolicy(pacmanController, ghostController, numTrials);
+		float initialEvaluation = evalPolicy(pacmanController, numTrials);
 		
 		int runs = 16;
 		float[][] coeffVariations = new float[runs][];
@@ -25,7 +27,7 @@ public class Utils {
 		for (int i = 0; i < runs; i++) {
 			coeffVariations[i] = add(copy(initialCoefficients), getRandomVector(initialCoefficients.length, 0, 0.05f));
 			pacmanController.setPolicyParameters(coeffVariations[i]);
-			coeffEvaluations[i][0] = evalPolicy(pacmanController, ghostController, numTrials) - initialEvaluation;
+			coeffEvaluations[i][0] = evalPolicy(pacmanController, numTrials) - initialEvaluation;
 		}
 		
 		pacmanController.setPolicyParameters(initialCoefficients);
@@ -124,13 +126,13 @@ public class Utils {
 		return f;
 	}
 
-	public static float evalPolicy(Controller<MOVE> policy, Controller<EnumMap<GHOST,MOVE>> ghostController, int trials) {
+	public static float evalPolicy(AController pacManController, int trials) {
 		Random rnd=new Random(0);
 		Thread[] threads = new Thread[trials];
 		AccumulatedScore accumulatedScore = new AccumulatedScore();
 		
 		for (int i = 0; i < trials; i++) {
-			threads[i] = new Evaluator(new Game(rnd.nextLong()), policy, ghostController, accumulatedScore);
+			threads[i] = new Evaluator(new Game(rnd.nextLong()), pacManController.copy(), accumulatedScore);
 			threads[i].start();
 		}
 		
@@ -153,10 +155,10 @@ public class Utils {
 		private Controller<EnumMap<GHOST,MOVE>> ghostController;
 		private AccumulatedScore accumulatedScore;
 		
-		public Evaluator(Game game, Controller<MOVE> pacmanController, Controller<EnumMap<GHOST,MOVE>> ghostController, AccumulatedScore accumulatedScore) {
+		public Evaluator(Game game, Controller<MOVE> pacmanController, AccumulatedScore accumulatedScore) {
 			this.game = game;
 			this.pacmanController = pacmanController;
-			this.ghostController = ghostController;
+			this.ghostController = new StarterGhosts();
 			this.accumulatedScore = accumulatedScore;
 		}
 		
@@ -167,7 +169,6 @@ public class Utils {
 				game.advanceGame(pacmanController.getMove(game, -1), ghostController.getMove(game, -1));
 				timeStep++;
 			}
-			
 			accumulatedScore.addScore(game.getScore());
 		}
 	}
@@ -180,8 +181,10 @@ public class Utils {
 			accumulatedScore = 0;
 		}
 		
-		public synchronized void addScore(int score) {
-			accumulatedScore += score;
+		public void addScore(int score) {
+			synchronized(this) {
+				accumulatedScore += score;
+			}
 		}
 		
 		public int getScore() {
