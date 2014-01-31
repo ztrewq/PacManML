@@ -1,18 +1,22 @@
 package pacman.utils;
 
 import static pacman.game.Constants.EAT_DISTANCE;
+
 import java.util.EnumMap;
 import java.util.LinkedList;
+
 import pacman.game.Constants;
 import pacman.game.Game;
 import pacman.game.Constants.GHOST;
 import pacman.game.Constants.MOVE;
 
-
 public class FeatureUtils {
 
 	private static final int MAX_DISTANCE = 221;
 	
+	public static float[] _getFeatures(Game game, int nodeIndex, MOVE move) {
+		return extendFeatures(_getFeatures(game, nodeIndex, move));
+	}
 	
 	/**
 	 * get the features vector relative to nodeIndex and move
@@ -31,17 +35,18 @@ public class FeatureUtils {
 			}
 		}
 		
-		float[] features = new float[10];
+		float[] features = new float[11];
 		features[0] = getSavePathLength(game, nodeIndex, move, 100);
 		features[1] = getMinimumDistance(game, nodeIndex, move, game.getActivePillsIndices());
 		features[2] = getMinimumDistance(game, nodeIndex, move, game.getActivePowerPillsIndices());
 		features[3] = getMinimumDistance(game, nodeIndex, move, toPrimitiveArray(normalGhosts));
 		features[4] = getMinimumDistance(game, nodeIndex, move, toPrimitiveArray(edibleGhosts));
-		features[5] = getRemainingNumberOfPills(game);
-		features[6] = move == game.getPacmanLastMoveMade().opposite() ? 1 : 0; // 1 if reversed
-		features[7] = getRemainingEdibleTime(game);
-		features[8] = getPillsInDirection(game, nodeIndex, move);
-		features[9] = getJunctionDistance(game, nodeIndex, move);
+		features[5] = completable(game, nodeIndex, move);
+		features[6] = getRemainingEdibleTime(game);
+		features[7] = getPillsInDirection(game, nodeIndex, move);
+		features[8] = getJunctionDistance(game, nodeIndex, move);
+		features[9] = getNumberOfSavePaths(game, nodeIndex, move, 60);
+		features[10] = getMinimumDistance(game, game.getNeighbour(nodeIndex, move), move.opposite(), toPrimitiveArray(normalGhosts));
 		
 		return features;
 	}
@@ -52,15 +57,14 @@ public class FeatureUtils {
 			extendedFeatures[i] = features[i];
 		}
 		
-		extendedFeatures[10] = (1 - features[4]) * features[7]; // ghost eating progress
-		extendedFeatures[11] = features[0] - features[9]; // safe path length after junction #
-		extendedFeatures[12] = features[3] - features[9]; // danger value #
-		extendedFeatures[13] = features[5] - features[8]; // possible eat progress
-		extendedFeatures[14] = features[3] - features[2]; // distance difference ghost powerPill
-		extendedFeatures[15] = features[0] - features[1];
-		extendedFeatures[16] = features[0] - features[2];
-		extendedFeatures[17] = features[0] - features[3];
-		extendedFeatures[18] = features[0] - features[4];
+		extendedFeatures[11] = (1 - features[4]) * features[6]; // edible ghosts
+		extendedFeatures[12] = Math.min(0, features[0] - features[8]); // safe path length after junction
+		extendedFeatures[13] = Math.min(0, features[3] - features[8]); // danger value
+		extendedFeatures[14] = Math.min(0, features[3] - features[2]); // distance difference ghost powerPill
+		extendedFeatures[15] = Math.min(0, features[0] - features[1]);
+		extendedFeatures[16] = Math.min(0, features[0] - features[2]);
+		extendedFeatures[17] = Math.min(0, features[0] - features[3]);
+		extendedFeatures[18] = Math.min(0, features[0] - features[4]);
 		
 		return extendedFeatures;
 	}
@@ -76,20 +80,57 @@ public class FeatureUtils {
 
 	    return integers;
 	}
+	
+	private static float getNumberOfSavePaths(Game game, int nodeIndex, MOVE initialMove, int depthLimit) {
+		// for each living ghost get the path to next junction
+		EnumMap<GHOST, int[]> ghostJunctionPaths = getGhostJunctionPaths(game);
+
+		// initialize BFS
+		LinkedList<BFSNode> frontier = new LinkedList<BFSNode>();
+		frontier.add(new BFSNode(game.getNeighbour(nodeIndex, initialMove), nodeIndex, 1));
+		int paths = 0;
+
+		// BFS
+		while (!frontier.isEmpty()) {
+			BFSNode node = frontier.pop();
+			
+			// continue if node is not safely reachable
+			if (reachableByGhost(game, node.nodeIndex, node.depth + EAT_DISTANCE, ghostJunctionPaths))
+				continue;
+			
+			// reached depth limit
+			if (node.depth == depthLimit) {
+				paths++;
+				continue;
+			}
+
+			// expand frontier with neighbor nodes
+			for (MOVE move : game.getPossibleMoves(node.nodeIndex)) {
+				int neighborNode = game.getNeighbour(node.nodeIndex, move);
+				if (neighborNode != node.preNodeIndex)
+					frontier.add(new BFSNode(neighborNode, node.nodeIndex, node.depth + 1));
+			}
+		}
 		
+		return (float) paths / 15;
+	}
+	
 	/**
-	 * get the distance to the next junction in the given direction
+	 * get the distance to the next junction
 	 */
 	private static float getJunctionDistance(Game game, int nodeIndex, MOVE initialMove) {
 		if (game.getNeighbour(nodeIndex, initialMove) == -1)
 			throw new IllegalArgumentException("invalid move given");
 		
-		int[] pathToFirstJunction = getPathToJunction(game, game.getNeighbour(nodeIndex, initialMove), initialMove);
+		int[] pathToFirstJunction = getJunctionPath(game, game.getNeighbour(nodeIndex, initialMove), initialMove);
 		return (float) pathToFirstJunction.length / MAX_DISTANCE;
 	}
 	
+	/**
+	 * get the number of pills in the given direction until a junction is reached
+	 */
 	private static float getPillsInDirection(Game game, int nodeIndex, MOVE initialMove) {
-		int[] pathToJunction = getPathToJunction(game, nodeIndex, initialMove);
+		int[] pathToJunction = getJunctionPath(game, nodeIndex, initialMove);
 		int pills = 0;
 		for (int node : pathToJunction) {
 			int pillIndex = game.getPillIndex(node);
@@ -100,7 +141,7 @@ public class FeatureUtils {
 		
 		return (float) pills / (game.getNumberOfPills() + game.getNumberOfPowerPills());
 	}
-	
+
 	/**
 	 * get the minimum path distance needed to reach any node in goalNodeIndices starting in startNodeIndex and taking the initialMove.
 	 */
@@ -185,22 +226,11 @@ public class FeatureUtils {
 	 */
 	private static float getSavePathLength(Game game, int nodeIndex, MOVE initialMove, int depthLimit) {
 		// for each living ghost get the path to next junction
-		EnumMap<GHOST, int[]> firstJunctionPaths = new EnumMap<GHOST, int[]>(GHOST.class);
-		for (GHOST ghost : GHOST.values()) {
-			// ghost is alive
-			if (game.getGhostLairTime(ghost) == 0) {
-				// ghost did just left the lair
-				if (game.getGhostLastMoveMade(ghost) == MOVE.NEUTRAL && game.getGhostCurrentNodeIndex(ghost) == game.getGhostInitialNodeIndex())
-					firstJunctionPaths.put(ghost, new int[] { game.getGhostCurrentNodeIndex(ghost) });
-				// ghost did not just left the lair
-				else
-					firstJunctionPaths.put(ghost, getPathToJunction(game, game.getGhostCurrentNodeIndex(ghost), game.getGhostLastMoveMade(ghost)));
-			}
-		}
+		EnumMap<GHOST, int[]> ghostJunctionPaths = getGhostJunctionPaths(game);
 
 		// initialize BFS
 		LinkedList<BFSNode> frontier = new LinkedList<BFSNode>();
-		frontier.add(new BFSNode(game.getNeighbour(nodeIndex, initialMove), nodeIndex, 0));
+		frontier.add(new BFSNode(game.getNeighbour(nodeIndex, initialMove), nodeIndex, 1));
 		int maxDepth = 0;
 
 		// BFS
@@ -208,7 +238,7 @@ public class FeatureUtils {
 			BFSNode node = frontier.pop();
 			
 			// continue if node is not safely reachable
-			if (reachableByGhost(game, node.nodeIndex, node.depth + EAT_DISTANCE + 1, firstJunctionPaths))
+			if (reachableByGhost(game, node.nodeIndex, node.depth + EAT_DISTANCE, ghostJunctionPaths))
 				continue;
 			
 			// don't expand further if depth limit is reached
@@ -228,18 +258,31 @@ public class FeatureUtils {
 		return (float) maxDepth / MAX_DISTANCE;
 	}
 	
-	/**
-	 * get the scaled (0 to 1) number of remaining pills.
-	 * returns 1 if no pill has been collected so far.
-	 */
-	private static float getRemainingNumberOfPills(Game game) {
-		return (float) (game.getNumberOfActivePills() + game.getNumberOfActivePowerPills()) / (game.getNumberOfPills() + game.getNumberOfPowerPills());
+	private static float completable(Game game, int nodeIndex, MOVE initialMove) {
+		EnumMap<GHOST, int[]> ghostJunctionPaths = getGhostJunctionPaths(game);
+		int remainingPills = game.getNumberOfActivePills() + game.getNumberOfActivePowerPills();
+		int safelyEdiblePills = 0;
+		int[] pathToJunction = getJunctionPath(game, nodeIndex, initialMove);
+		for (int i = 0; i < pathToJunction.length; i++) {
+			if (!reachableByGhost(game, pathToJunction[i], i, ghostJunctionPaths)) {
+				int pillIndex = game.getPillIndex(pathToJunction[i]);
+				int powerPillIndex = game.getPowerPillIndex(pathToJunction[i]);
+				if (pillIndex != -1 && game.isPillStillAvailable(pillIndex) || powerPillIndex != -1 && game.isPowerPillStillAvailable(powerPillIndex)) {
+					safelyEdiblePills++;
+				}
+			}
+			else {
+				break;
+			}
+		}
+		
+		return safelyEdiblePills == remainingPills ? 1 : 0;
 	}
 
 	/**
 	 * get the path to the next junction starting in nodeIndex taking the initial Move
 	 */
-	private static int[] getPathToJunction(Game game, int nodeIndex, MOVE initialMove) {
+	private static int[] getJunctionPath(Game game, int nodeIndex, MOVE initialMove) {
 		// no move
 		if (initialMove == MOVE.NEUTRAL)
 			throw new IllegalArgumentException("move must not be NEUTRAL");
@@ -282,11 +325,31 @@ public class FeatureUtils {
 		
 		return path;
 	}
+
+	/**
+	 * get the path to the next junction for each living ghost
+	 */
+	private static EnumMap<GHOST, int[]> getGhostJunctionPaths(Game game) {
+		EnumMap<GHOST, int[]> ghostJunctionPaths = new EnumMap<GHOST, int[]>(GHOST.class);
+		for (GHOST ghost : GHOST.values()) {
+			// ghost is alive
+			if (game.getGhostLairTime(ghost) == 0) {
+				// ghost did just left the lair
+				if (game.getGhostLastMoveMade(ghost) == MOVE.NEUTRAL && game.getGhostCurrentNodeIndex(ghost) == game.getGhostInitialNodeIndex())
+					ghostJunctionPaths.put(ghost, new int[] { game.getGhostCurrentNodeIndex(ghost) });
+				// ghost did not just left the lair
+				else
+					ghostJunctionPaths.put(ghost, getJunctionPath(game, game.getGhostCurrentNodeIndex(ghost), game.getGhostLastMoveMade(ghost)));
+			}
+		}
+		
+		return ghostJunctionPaths;
+	}
 	
 	/**
 	 * test if nodeIndex can be reached by any ghost within the time limit
 	 */
-	private static boolean reachableByGhost(Game game, int nodeIndex, int timeLimit, EnumMap<GHOST, int[]> firstJunctionPaths) {
+	private static boolean reachableByGhost(Game game, int nodeIndex, int timeLimit, EnumMap<GHOST, int[]> ghostJunctionPaths) {
 		for (GHOST ghost : GHOST.values()) {
 			// ghost is inside the lair
 			if (game.getGhostLairTime(ghost) > 0) {
@@ -298,7 +361,7 @@ public class FeatureUtils {
 			
 			// ghost is alive
 			else if (game.getGhostLairTime(ghost) == 0) {
-				int[] junctionPath = firstJunctionPaths.get(ghost);
+				int[] junctionPath = ghostJunctionPaths.get(ghost);
 				int distanceToJunction = junctionPath.length - 1;
 				int distanceJunctionToNode = game.getShortestPathDistance(junctionPath[junctionPath.length - 1], nodeIndex);
 				int edibleTime = game.getGhostEdibleTime(ghost);

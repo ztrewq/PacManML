@@ -63,14 +63,14 @@ public class Executor
 	public static void main(String[] args) throws IOException
 	{
 		NeuralNetworkController nnc = NeuralNetworkController.createFromFile("neurocontroller");
-//		StateValuePair[] svp = getStateValuePairs(loadReplay("replay"), nnc);
-//		StateValuePair[] esvp = extendStateValuePairs(svp);
-//		float[] coefficients = getLinearRegressionCoefficients(esvp);
-//		runGame(nnc, new StarterGhosts(), true, 10);
+		StateValuePair[] svp = getStateValuePairs(loadReplay("replay"), nnc);
+		StateValuePair[] esvp = extendStateValuePairs(svp);
+		float[] coefficients = getLinearRegressionCoefficients(esvp);
+		runGame(new MyController(coefficients), new StarterGhosts(), true, 10);
 //		train(new MyController(coefficients), new StarterGhosts(), 10);
 		
-		RBFController rbfc = new RBFController("rbfcontroller");
-		rbfc.trainNetwork("training.csv"); // training.csv wird nicht gefunden
+//		RBFController rbfc = new RBFController("rbfcontroller");
+//		rbfc.trainNetwork("training.csv"); // training.csv wird nicht gefunden
 
 		//policy evaluation averaging results from samples (x trials with same seed)
 //		int numTrials=10;
@@ -195,7 +195,7 @@ public class Executor
 			outputValues[i][0] = stateValuePairs[i].getValue();
 		}
 		
-		nn.train(inputValues, outputValues, 2500);
+		nn.train(inputValues, outputValues, 5000);
 		float[] weights = nn.getWeights();
 		
 		for (int i = 0; i < coefficients.length; i++) {
