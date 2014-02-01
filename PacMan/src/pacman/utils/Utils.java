@@ -32,11 +32,14 @@ public class Utils {
 		
 		pacmanController.setPolicyParameters(initialCoefficients);
 		
-		Matrix theta = new Matrix(getDoubles(coeffVariations));
-		Matrix j = new Matrix(getDoubles(coeffEvaluations));
-		Matrix g = (((((theta.transpose()).times(theta)).inverse()).times(theta.transpose())).times(j));
-		
-		return getFloats(g.getColumnPackedCopy());
+		try {
+			Matrix theta = new Matrix(getDoubles(coeffVariations));
+			Matrix j = new Matrix(getDoubles(coeffEvaluations));
+			Matrix g = (((((theta.transpose()).times(theta)).inverse()).times(theta.transpose())).times(j));
+			return getFloats(g.getColumnPackedCopy());
+		} catch (Exception e) {
+			return new float[initialCoefficients.length]; // 0 vector
+		}
 	}
 	
 	/**
