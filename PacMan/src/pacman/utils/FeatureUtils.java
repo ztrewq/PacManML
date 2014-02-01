@@ -14,10 +14,6 @@ public class FeatureUtils {
 
 	private static final int MAX_DISTANCE = 221;
 	
-	public static float[] _getFeatures(Game game, int nodeIndex, MOVE move) {
-		return extendFeatures(_getFeatures(game, nodeIndex, move));
-	}
-	
 	/**
 	 * get the features vector relative to nodeIndex and move
 	 */
@@ -35,18 +31,19 @@ public class FeatureUtils {
 			}
 		}
 		
-		float[] features = new float[11];
-		features[0] = getSavePathLength(game, nodeIndex, move, 100);
-		features[1] = getMinimumDistance(game, nodeIndex, move, game.getActivePillsIndices());
-		features[2] = getMinimumDistance(game, nodeIndex, move, game.getActivePowerPillsIndices());
-		features[3] = getMinimumDistance(game, nodeIndex, move, toPrimitiveArray(normalGhosts));
-		features[4] = getMinimumDistance(game, nodeIndex, move, toPrimitiveArray(edibleGhosts));
-		features[5] = completable(game, nodeIndex, move);
-		features[6] = getRemainingEdibleTime(game);
-		features[7] = getPillsInDirection(game, nodeIndex, move);
-		features[8] = getJunctionDistance(game, nodeIndex, move);
-		features[9] = getNumberOfSavePaths(game, nodeIndex, move, 60);
+		float[] features = new float[12];
+		features[0] = getSavePathLength(game, nodeIndex, move, 110);
+		features[1] = getNumberOfSavePaths(game, nodeIndex, move, 50);
+		features[2] = getJunctionDistance(game, nodeIndex, move);
+		features[3] = getPillsInDirection(game, nodeIndex, move);
+		features[4] = getMinimumDistance(game, nodeIndex, move, game.getActivePillsIndices());
+		features[5] = getMinimumDistance(game, nodeIndex, move, game.getActivePowerPillsIndices());
+		features[6] = completable(game, nodeIndex, move);
+		features[7] = getMinimumDistance(game, nodeIndex, move, toPrimitiveArray(edibleGhosts));
+		features[8] = getRemainingEdibleTime(game);
+		features[9] = getMinimumDistance(game, nodeIndex, move, toPrimitiveArray(normalGhosts));
 		features[10] = getMinimumDistance(game, game.getNeighbour(nodeIndex, move), move.opposite(), toPrimitiveArray(normalGhosts));
+		features[11] = move == game.getPacmanLastMoveMade().opposite() ? 1 : 0;
 		
 		return features;
 	}
