@@ -84,9 +84,4 @@ public class MyController extends AController {
 
 	}
 
-	@Override
-	public AController copy() {
-		return new MyController(valueFunction.coefficients);
-	}
-
 }

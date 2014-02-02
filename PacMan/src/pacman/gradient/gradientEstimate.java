@@ -25,13 +25,13 @@ public class gradientEstimate {
 		float[] policy = pacmanController.getPolicyParameters();
 		Gradient grad = new Gradient(policy.length);
 		for(int o = 0; o < policy.length; o++){
-			float v0 = evalPolicy(pacmanController, numTrials);
+			float v0 = evalPolicy(pacmanController, ghostController, numTrials);
 			j[0] = v0;
 			
 			for(int k = 1; k < maxK; k++){
 				d[k] = uniform(dMin, dMax);
 				pacmanController.setPolicyParameters(updatePolicy(policy, o, d[k]));
-				float vk = evalPolicy(pacmanController, numTrials);
+				float vk = evalPolicy(pacmanController, ghostController, numTrials);
 				j[k] = vk;
 			}
 			

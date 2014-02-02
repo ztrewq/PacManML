@@ -11,6 +11,4 @@ public abstract class AController extends Controller<MOVE>{
 	
 	public abstract void setPolicyParameters(float[] parameters);
 	
-	public abstract AController copy();
-	
 }

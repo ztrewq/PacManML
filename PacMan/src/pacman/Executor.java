@@ -66,8 +66,8 @@ public class Executor
 		StateValuePair[] svp = getStateValuePairs(loadReplay("replay"), nnc);
 		StateValuePair[] esvp = extendStateValuePairs(svp);
 		float[] coefficients = getLinearRegressionCoefficients(esvp);
-//		runGame(new MyController(coefficients), new StarterGhosts(), true, 10);
-		train(new MyController(coefficients), 10);
+		runGame(new MyController(coefficients), new StarterGhosts(), true, 10);
+//		train(new MyController(coefficients), new StarterGhosts(), 10);
 		
 //		RBFController rbfc = new RBFController("rbfcontroller");
 //		rbfc.trainNetwork("training.csv"); // training.csv wird nicht gefunden
@@ -115,23 +115,22 @@ public class Executor
 		 */
 	}
 	
-	public static void train(MyController pacManController, int numTrials) {
+	public static void train(MyController pacManController,Controller<EnumMap<GHOST,MOVE>> ghostController, int numTrials) {
 		GameView gameView = new GameView(new Game(0)).showGame();
-		System.out.println("evaluation before training: " + Utils.evalPolicy(pacManController, numTrials));
+		System.out.println("evaluation before training: " + Utils.evalPolicy(pacManController, ghostController, numTrials));
 		
 		float learningRate = (float)1e-9;
 		float[] gradient = null;
 		while (true) {
 			// train
-			gradient = getGradient(pacManController, numTrials);
+			gradient = getGradient(pacManController, ghostController, numTrials);
 			pacManController.setPolicyParameters(normalize(add(normalize(pacManController.getPolicyParameters()), scale(gradient, learningRate))));
-			System.out.println("new evaluation : " + Utils.evalPolicy(pacManController, numTrials));
+			System.out.println("new evaluation : " + Utils.evalPolicy(pacManController, ghostController, numTrials));
 //			learningRate *= 0.95f;			
 			
 			// demonstrate controller 
 			Game game = new Game(System.currentTimeMillis());
 			gameView.setGame(game);
-			StarterGhosts ghostController = new StarterGhosts();
 			while(!game.gameOver()) {
 				game.advanceGame(pacManController.getMove(game, -1), ghostController.getMove(game,-1));
 		        try{Thread.sleep(10);}catch(Exception e){}
