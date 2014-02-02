@@ -5,7 +5,6 @@ import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.Writer;
 import java.util.Arrays;
 
 import pacman.game.Constants.MOVE;
@@ -81,13 +80,10 @@ public class MyController extends AController {
 				String str;
 				while ((str = br.readLine()) != null) {
 					String[] strArray = str.split(",");
-				System.out.println(strArray.length);
 				float[] coeff = new float[strArray.length];
-				System.out.println(coeff.length);
 				for (int i = 0; i < strArray.length; i++) {
 					String s = strArray[i].trim();
 					coeff[i] = Float.parseFloat(s);
-					System.out.println(coeff.length);
 				}
 				this.coefficients = Arrays.copyOf(coeff, coeff.length);
 				}
