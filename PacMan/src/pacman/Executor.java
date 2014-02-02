@@ -66,12 +66,13 @@ public class Executor
 		StateValuePair[] svp = getStateValuePairs(loadReplay("replay"), nnc);
 		StateValuePair[] esvp = extendStateValuePairs(svp);
 		float[] coefficients = getLinearRegressionCoefficients(esvp);
-		runGame(new MyController(coefficients), new StarterGhosts(), true, 10);
+		MyController controller = new MyController(coefficients);
+//		runGame(new MyController(coefficients), new StarterGhosts(), true, 10);
 //		train(new MyController(coefficients), new StarterGhosts(), 10);
 		
 //		RBFController rbfc = new RBFController("rbfcontroller");
 //		rbfc.trainNetwork("training.csv"); // training.csv wird nicht gefunden
-
+		
 		//policy evaluation averaging results from samples (x trials with same seed)
 //		int numTrials=10;
 //		float controllerScore = exec.evalPolicy(NeuralNetworkController.createFromFile("controller"), new StarterGhosts(), numTrials);
@@ -136,6 +137,7 @@ public class Executor
 		        try{Thread.sleep(10);}catch(Exception e){}
 		        gameView.repaint();
 			}
+			pacManController.writeToFile();
 		}
 	}
 	

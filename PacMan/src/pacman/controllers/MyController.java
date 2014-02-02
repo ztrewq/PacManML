@@ -1,5 +1,11 @@
 package pacman.controllers;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Writer;
 import java.util.Arrays;
 
 import pacman.game.Constants.MOVE;
@@ -12,6 +18,11 @@ public class MyController extends AController {
 
 	public MyController(float[] coefficients) {
 		valueFunction = new LinearFunction(coefficients);
+	}
+	
+	public MyController(String filename) {
+		valueFunction = new LinearFunction(filename);
+		
 	}
 
 	@Override
@@ -51,12 +62,44 @@ public class MyController extends AController {
 		valueFunction.setCoefficients(coefficients);
 	}
 
-	private class LinearFunction {
+	public void writeToFile() {
+		valueFunction.saveToFile();
+	}
+	}
+	class LinearFunction {
 
 		private float[] coefficients;
 
 		public LinearFunction(float[] coefficients) {
 			this.coefficients = Arrays.copyOf(coefficients, coefficients.length);
+		}
+		
+		public LinearFunction(String filename) {
+			BufferedReader br = null;
+			try {
+				br = new BufferedReader(new FileReader(filename));
+				String str;
+				while ((str = br.readLine()) != null) {
+					String[] strArray = str.split(",");
+				System.out.println(strArray.length);
+				float[] coeff = new float[strArray.length];
+				System.out.println(coeff.length);
+				for (int i = 0; i < strArray.length; i++) {
+					String s = strArray[i].trim();
+					coeff[i] = Float.parseFloat(s);
+					System.out.println(coeff.length);
+				}
+				this.coefficients = Arrays.copyOf(coeff, coeff.length);
+				}
+			}
+			catch (IOException e) {
+				System.err.println("Error reading file.");
+			}
+			finally {
+				try {br.close(); } catch (Exception e) { }
+			}
+		
+		
 		}
 
 		public float getOutput(float[] input) {
@@ -81,7 +124,26 @@ public class MyController extends AController {
 		public float[] getCoefficients() {
 			return Arrays.copyOf(coefficients, coefficients.length);
 		}
-
-	}
+		
+		public void saveToFile() {
+			String filename = "linController";
+			BufferedWriter w = null;
+			try
+			{
+				w = new BufferedWriter(new FileWriter(filename));
+				for (int i = 0; i < getCoefficients().length -1 ; i++)
+				w.write(Float.toString(getCoefficients()[i])+",");
+				w.write(Float.toString(getCoefficients()[getCoefficients().length-1]));
+				w.newLine();
+			}
+			catch (IOException e) {
+				System.err.println("Couldn't create file");
+			}
+			finally {
+				if (w != null)
+					try { w.close(); }
+					catch (IOException e) {e.printStackTrace();}
+			}
+		}
 
 }
