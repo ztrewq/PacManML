@@ -1,11 +1,14 @@
 package pacman;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.LinkedList;
@@ -62,16 +65,22 @@ public class Executor
 	 */
 	public static void main(String[] args) throws IOException
 	{
-		NeuralNetworkController nnc = NeuralNetworkController.createFromFile("neurocontroller");
-		StateValuePair[] svp = getStateValuePairs(loadReplay("replay"), nnc);
-		StateValuePair[] esvp = extendStateValuePairs(svp);
-		float[] coefficients = getLinearRegressionCoefficients(esvp);
-		MyController controller = new MyController(coefficients);
+//		NeuralNetworkController nnc = NeuralNetworkController.createFromFile("neurocontroller");
+//		StateValuePair[] svp = getStateValuePairs(loadReplay("replay"), nnc);
+//		StateValuePair[] esvp = extendStateValuePairs(svp);
+//		writeSVPairs(loadReplay("replay"),nnc);
+//		float[] coefficients = getLinearRegressionCoefficients(esvp);
+//		MyController controller = new MyController(coefficients);
 //		runGame(new MyController(coefficients), new StarterGhosts(), true, 10);
 //		train(new MyController(coefficients), new StarterGhosts(), 10);
-		
+
 //		RBFController rbfc = new RBFController("rbfcontroller");
-//		rbfc.trainNetwork("training.csv"); // training.csv wird nicht gefunden
+//		rbfc.trainNetwork("training.csv");
+//		StateValuePair[] svp = getStateValuePairs(loadReplay("replay"), rbfc);
+//		StateValuePair[] esvp = extendStateValuePairs(svp);
+//		float[] coefficients = getLinearRegressionCoefficients(svp);
+//		MyController controller = new MyController(coefficients);
+//		runGame(controller, new StarterGhosts(), true, 10);
 		
 		//policy evaluation averaging results from samples (x trials with same seed)
 //		int numTrials=10;
@@ -149,6 +158,28 @@ public class Executor
 		return gr.FiniteDifferenceGradientEvaluation(pacManController, ghostController, numTrials);
 	}
 	
+	public static void writeSVPairs(ArrayList<String> replayStates, NeuralNetworkController nnC) {
+		BufferedWriter br = null;
+		try {
+			br = new BufferedWriter(new FileWriter("training.csv"));
+			StateValuePair[] svPairs = getStateValuePairs(replayStates, nnC);
+			StateValuePair[] extSvPairs = extendStateValuePairs(svPairs);
+			for (StateValuePair sv : extSvPairs) {
+				float[] features = sv.getState();
+				float estimation = sv.getValue();
+				for (int i = 0; i < features.length;i++)
+					br.write(Float.toString(features[i])+",");
+				br.write(Float.toString(estimation));
+				br.newLine();
+			}
+		}
+		catch (IOException e) {
+			System.err.println("Error creating training file");
+		}
+		finally {
+			try { br.close(); } catch (Exception e) { };
+		}
+	}
 	public static StateValuePair[] getStateValuePairs(ArrayList<String> replayStates, NeuralNetworkController neuralNetworkController) {
 		LinkedList<StateValuePair> stateValuePairList = new LinkedList<StateValuePair>();
 		
@@ -172,6 +203,28 @@ public class Executor
 		return stateValuePairs;
 	}
 	
+	public static StateValuePair[] getStateValuePairs(ArrayList<String> replayStates, RBFController rbfController) {
+		LinkedList<StateValuePair> stateValuePairList = new LinkedList<StateValuePair>();
+		
+		Game game=new Game(0);
+		for(String state : replayStates) {
+			game.setGameState(state);	
+			int currentNode = game.getPacmanCurrentNodeIndex();
+			for (MOVE move : game.getPossibleMoves(game.getPacmanCurrentNodeIndex())) {
+				float[] features = FeatureUtils.getFeatures(game, currentNode, move);
+				float[] estimation = rbfController.getValueFunctionEstimation(features);
+				stateValuePairList.add(new StateValuePair(features, estimation[0]));
+			}
+		}
+		
+		StateValuePair[] stateValuePairs = new StateValuePair[stateValuePairList.size()];
+		int i = 0;
+		for (StateValuePair stateValuePair : stateValuePairList) {
+			stateValuePairs[i++] = stateValuePair;
+		}
+		
+		return stateValuePairs;	
+	}
 	public static StateValuePair[] extendStateValuePairs(StateValuePair[] stateValuePairs) {
 		StateValuePair[] extendedStateValuePairs = new StateValuePair[stateValuePairs.length];
 		int i = 0;

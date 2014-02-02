@@ -99,6 +99,8 @@ public class MyController extends AController {
 		}
 
 		public float getOutput(float[] input) {
+			System.out.println(coefficients.length);
+			System.out.println(input.length);
 			if (input.length != coefficients.length)
 				throw new IllegalArgumentException();
 

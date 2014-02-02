@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
+import org.encog.mathutil.rbf.RBFEnum;
 import org.encog.ml.data.MLData;
 import org.encog.ml.data.MLDataSet;
 import org.encog.ml.data.basic.BasicMLData;
@@ -94,11 +95,11 @@ public class RBFController extends AController {
         			System.out.println(train.getError());
         			int epoch = 1;
         			int epochSave = 1;
-        			while (train.getError() > 0.1) {
+        			while (train.getError() > 0.01) {
                         train.iteration();
                         System.out.println("Iteration: " + epoch + " Error: "+train.getError());
                         epoch++;
-                        if ((epoch - epochSave)> 4000) {
+                        if ((epoch - epochSave)> 15) {
                                 saveNetwork();
                                 epochSave = epoch;
                         }
@@ -147,6 +148,18 @@ public class RBFController extends AController {
         public double[] getValueFunctionEstimation(double[] input) {
                 MLData mlinput = new BasicMLData(input);
                 return rbfnet.compute(mlinput).getData();
+        }
+        
+        public float[] getValueFunctionEstimation(float[] input) {
+        		double[] inputD = new double[input.length];
+        		for (int i = 0; i<input.length;i++)
+        			inputD[i] = input[i];
+                MLData mlinput = new BasicMLData(inputD);
+                double[] outputD = rbfnet.compute(mlinput).getData();
+                float[] output = new float[outputD.length];
+                for (int j = 0; j < outputD.length; j++)
+                	output[j] = (float) outputD[j];
+                return output;
         }
 
         @Override
