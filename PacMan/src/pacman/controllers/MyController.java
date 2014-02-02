@@ -1,12 +1,17 @@
 package pacman.controllers;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.Arrays;
 
 import pacman.game.Constants.MOVE;
 import pacman.game.Game;
 import static pacman.utils.FeatureUtils.*;
 
-public class MyController extends AController {
+public class MyController extends AController implements Serializable{
 
 	private LinearFunction valueFunction;
 
@@ -51,7 +56,7 @@ public class MyController extends AController {
 		valueFunction.setCoefficients(coefficients);
 	}
 
-	private class LinearFunction {
+	private class LinearFunction implements Serializable{
 
 		private float[] coefficients;
 
@@ -89,4 +94,33 @@ public class MyController extends AController {
 		return new MyController(valueFunction.coefficients);
 	}
 
+	//Loads Controller from file
+	public static MyController createFromFile(String file){
+		
+		try{
+			FileInputStream fout = new FileInputStream("data/"+file+".sav");
+			ObjectInputStream out = new ObjectInputStream(fout);
+			MyController ret = (MyController)out.readObject();
+			out.close();
+			fout.close();
+			return ret;
+		}catch(Exception e){
+			System.out.println("CANT CREATE MYCONTROLLER FROM FILE: data/" +file+".sav :"+e);
+		}
+		return null;
+	}
+	
+	//Writes Controller to file
+	public static void writeToFile(MyController ctrl, String file){
+		try{
+			FileOutputStream fout = new FileOutputStream("data/"+file+".sav");
+			ObjectOutputStream out = new ObjectOutputStream(fout);
+			out.writeObject(ctrl);
+			out.close();
+			fout.close();
+		}catch(Exception e){
+			System.out.println("SAVE ERROR WRITING TO FILE: data/" +file+".sav :"+e);
+		}
+	}
+	
 }
