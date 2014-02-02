@@ -160,4 +160,10 @@ public class RBFController extends AController {
                 // TODO Auto-generated method stub
                 
         }
+
+		@Override
+		public AController copy() {
+			// TODO Auto-generated method stub
+			return null;
+		}
 }
