@@ -49,29 +49,19 @@ public class FeatureUtils {
 	}
 	
 	public static float[] extendFeatures(float[] features) {
-		float[] extendedFeatures = new float[29];
-		int index = 0;
-		
-		// copy old features
-		for (float feature : features) {
-			extendedFeatures[index++] = feature;
+		float[] extendedFeatures = new float[19];
+		for (int i = 0; i < features.length; i++) {
+			extendedFeatures[i] = features[i];
 		}
 		
-		// add squared value of features 0-5 and 7-9
-		for (int j = 0; j <= 5; j++)
-			extendedFeatures[index++] = features[j] * features[j];
-		for (int j = 7; j <= 9; j++)
-			extendedFeatures[index++] = features[j] * features[j];
-		
-		// add some further featuers
-		extendedFeatures[index++] = (1 - features[7]) * features[8]; // edible ghosts
-		extendedFeatures[index++] = features[0] - features[2]; // safe path length after junction
-		extendedFeatures[index++] = features[9] - features[2]; // danger value
-		extendedFeatures[index++] = features[9] - features[5]; // distance difference ghost powerPill
-		extendedFeatures[index++] = features[0] - features[4];
-		extendedFeatures[index++] = features[0] - features[5];
-		extendedFeatures[index++] = features[0] - features[7];
-		extendedFeatures[index++] = features[0] - features[9];
+		extendedFeatures[11] = (1 - features[4]) * features[6]; // edible ghosts
+		extendedFeatures[12] = Math.min(0, features[0] - features[8]); // safe path length after junction
+		extendedFeatures[13] = Math.min(0, features[3] - features[8]); // danger value
+		extendedFeatures[14] = Math.min(0, features[3] - features[2]); // distance difference ghost powerPill
+		extendedFeatures[15] = Math.min(0, features[0] - features[1]);
+		extendedFeatures[16] = Math.min(0, features[0] - features[2]);
+		extendedFeatures[17] = Math.min(0, features[0] - features[3]);
+		extendedFeatures[18] = Math.min(0, features[0] - features[4]);
 		
 		return extendedFeatures;
 	}

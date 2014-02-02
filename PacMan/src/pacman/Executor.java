@@ -196,7 +196,7 @@ public class Executor
 			outputValues[i][0] = stateValuePairs[i].getValue();
 		}
 		
-		nn.train(inputValues, outputValues, 10000);
+		nn.train(inputValues, outputValues, 5000);
 		float[] weights = nn.getWeights();
 		
 		for (int i = 0; i < coefficients.length; i++) {
