@@ -131,6 +131,7 @@ public class Executor
 			gradient = getGradient(pacManController, numTrials);
 			pacManController.setPolicyParameters(normalize(add(normalize(pacManController.getPolicyParameters()), scale(gradient, learningRate))));
 			float currentEvaluation = Utils.evalPolicy(pacManController, numTrials);
+			writeValues(pacManController, currentEvaluation, "valuesLin.txt");
 			System.out.println("new evaluation : " + currentEvaluation);
 //			learningRate *= 0.95f;			
 			
@@ -152,6 +153,21 @@ public class Executor
 		}
 	}
 	
+	// write evaluation values to a values.txt-file (valuesLin.txt or valuesNeural.txt)
+	public static void writeValues(AController controller, float value, String file){
+		BufferedWriter br = null;
+		try {
+			br = new BufferedWriter(new FileWriter(file));
+			br.write(Float.toString(value)+",");
+		}
+		catch (IOException e) {
+			System.err.println("Error writing to file");
+		}
+		finally {
+			try {br.close();} catch (IOException e){ };
+		}
+	
+	}
 	//gradient estimation
 	public static float[] gradientEstimation(AController pacManController,Controller<EnumMap<GHOST,MOVE>> ghostController) {
 		int numTrials=10;
