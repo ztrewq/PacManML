@@ -21,7 +21,7 @@ public class Utils {
 		float[] initialCoefficients = normalize(pacmanController.getPolicyParameters());
 		float initialEvaluation = evalPolicy(pacmanController, numTrials);
 		
-		int runs = 16;
+		int runs = 8;
 		float[][] coeffVariations = new float[runs][];
 		float[][] coeffEvaluations = new float[runs][1];
 		for (int i = 0; i < runs; i++) {

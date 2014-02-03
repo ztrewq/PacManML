@@ -62,12 +62,14 @@ public class Executor
 	 */
 	public static void main(String[] args) throws IOException
 	{
-		NeuralNetworkController nnc = NeuralNetworkController.createFromFile("neurocontroller");
-		StateValuePair[] svp = getStateValuePairs(loadReplay("replay"), nnc);
-		StateValuePair[] esvp = extendStateValuePairs(svp);
-		float[] coefficients = getLinearRegressionCoefficients(esvp);
+		//NeuralNetworkController nnc = NeuralNetworkController.createFromFile("neurocontroller");
+		//StateValuePair[] svp = getStateValuePairs(loadReplay("replay"), nnc);
+		//StateValuePair[] esvp = extendStateValuePairs(svp);
+		//float[] coefficients = getLinearRegressionCoefficients(esvp);
 //		runGame(new MyController(coefficients), new StarterGhosts(), true, 10);
-		train(new MyController(coefficients), 10);
+		MyController ctrl = MyController.createFromFile("linearcontroller");
+		
+		train(ctrl, 1);
 		
 //		RBFController rbfc = new RBFController("rbfcontroller");
 //		rbfc.trainNetwork("training.csv"); // training.csv wird nicht gefunden
@@ -119,7 +121,8 @@ public class Executor
 		GameView gameView = new GameView(new Game(0)).showGame();
 		System.out.println("evaluation before training: " + Utils.evalPolicy(pacManController, numTrials));
 		
-		float learningRate = (float)1e-9;
+		//float learningRate = (float)1e-9;
+		float learningRate = 0.5f;
 		float[] gradient = null;
 		while (true) {
 			// train
@@ -128,6 +131,9 @@ public class Executor
 			System.out.println("new evaluation : " + Utils.evalPolicy(pacManController, numTrials));
 //			learningRate *= 0.95f;			
 			
+			MyController.writeToFile(pacManController, "linearcontroller2");
+			System.out.println("saved");
+			/*
 			// demonstrate controller 
 			Game game = new Game(System.currentTimeMillis());
 			gameView.setGame(game);
@@ -136,7 +142,7 @@ public class Executor
 				game.advanceGame(pacManController.getMove(game, -1), ghostController.getMove(game,-1));
 		        try{Thread.sleep(10);}catch(Exception e){}
 		        gameView.repaint();
-			}
+			}*/
 		}
 	}
 	
