@@ -1,8 +1,10 @@
 package pacman;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -62,12 +64,14 @@ public class Executor
 	 */
 	public static void main(String[] args) throws IOException
 	{
-		//NeuralNetworkController nnc = NeuralNetworkController.createFromFile("neurocontroller");
-		//StateValuePair[] svp = getStateValuePairs(loadReplay("replay"), nnc);
-		//StateValuePair[] esvp = extendStateValuePairs(svp);
-		//float[] coefficients = getLinearRegressionCoefficients(esvp);
+		NeuralNetworkController nnc = NeuralNetworkController.createFromFile("neurocontroller");
+		StateValuePair[] svp = getStateValuePairs(loadReplay("replay"), nnc);
+		StateValuePair[] esvp = extendStateValuePairs(svp);
+		float[] coefficients = getLinearRegressionCoefficients(esvp);
 //		runGame(new MyController(coefficients), new StarterGhosts(), true, 10);
+		writeSVPairs(loadReplay("replay"),nnc);
 		MyController ctrl = MyController.createFromFile("linearcontroller");
+
 		
 		train(ctrl, 1);
 		
@@ -153,7 +157,30 @@ public class Executor
 		gradientEstimate gr = new gradientEstimate();
 		return gr.FiniteDifferenceGradientEvaluation(pacManController, ghostController, numTrials);
 	}
-	
+
+    public static void writeSVPairs(ArrayList<String> replayStates, NeuralNetworkController nnC) {
+        BufferedWriter br = null;
+        try {
+            br = new BufferedWriter(new FileWriter("training.csv"));
+            StateValuePair[] svPairs = getStateValuePairs(replayStates, nnC);
+            StateValuePair[] extSvPairs = extendStateValuePairs(svPairs);
+            for (StateValuePair sv : extSvPairs) {
+                float[] features = sv.getState();
+                float estimation = sv.getValue();
+                for (int i = 0; i < features.length;i++)
+                    br.write(Float.toString(features[i])+",");
+                br.write(Float.toString(estimation));
+                br.newLine();
+            }
+        }
+        catch (IOException e) {
+            System.err.println("Error creating training file");
+        }
+        finally {
+            try { br.close(); } catch (Exception e) { };
+        }
+    }
+
 	public static StateValuePair[] getStateValuePairs(ArrayList<String> replayStates, NeuralNetworkController neuralNetworkController) {
 		LinkedList<StateValuePair> stateValuePairList = new LinkedList<StateValuePair>();
 		
