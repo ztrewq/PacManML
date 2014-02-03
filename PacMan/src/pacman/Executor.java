@@ -64,16 +64,14 @@ public class Executor
 	 */
 	public static void main(String[] args) throws IOException
 	{
-		NeuralNetworkController nnc = NeuralNetworkController.createFromFile("neurocontroller");
-		StateValuePair[] svp = getStateValuePairs(loadReplay("replay"), nnc);
-		StateValuePair[] esvp = extendStateValuePairs(svp);
-		float[] coefficients = getLinearRegressionCoefficients(esvp);
+//		NeuralNetworkController nnc = NeuralNetworkController.createFromFile("neurocontroller");
+//		StateValuePair[] svp = getStateValuePairs(loadReplay("replay"), nnc);
+//		StateValuePair[] esvp = extendStateValuePairs(svp);
+//		float[] coefficients = getLinearRegressionCoefficients(esvp);
 //		runGame(new MyController(coefficients), new StarterGhosts(), true, 10);
-		writeSVPairs(loadReplay("replay"),nnc);
 		MyController ctrl = MyController.createFromFile("linearcontroller");
+		train(ctrl, 10);
 
-		
-		train(ctrl, 1);
 		
 //		RBFController rbfc = new RBFController("rbfcontroller");
 //		rbfc.trainNetwork("training.csv"); // training.csv wird nicht gefunden
@@ -123,20 +121,24 @@ public class Executor
 	
 	public static void train(MyController pacManController, int numTrials) {
 		GameView gameView = new GameView(new Game(0)).showGame();
-		System.out.println("evaluation before training: " + Utils.evalPolicy(pacManController, numTrials));
+		float bestEvaluation = Utils.evalPolicy(pacManController, numTrials);
+		System.out.println("evaluation before training: " + bestEvaluation);
 		
-		//float learningRate = (float)1e-9;
-		float learningRate = 0.5f;
+		float learningRate = (float)1e-9;
 		float[] gradient = null;
 		while (true) {
 			// train
 			gradient = getGradient(pacManController, numTrials);
 			pacManController.setPolicyParameters(normalize(add(normalize(pacManController.getPolicyParameters()), scale(gradient, learningRate))));
-			System.out.println("new evaluation : " + Utils.evalPolicy(pacManController, numTrials));
+			float currentEvaluation = Utils.evalPolicy(pacManController, numTrials);
+			System.out.println("new evaluation : " + currentEvaluation);
 //			learningRate *= 0.95f;			
 			
-			MyController.writeToFile(pacManController, "linearcontroller2");
-			System.out.println("saved");
+			if (currentEvaluation > bestEvaluation) {
+				bestEvaluation = currentEvaluation;
+				MyController.writeToFile(pacManController, "linearcontroller2");
+				System.out.println("saved");
+			}
 			/*
 			// demonstrate controller 
 			Game game = new Game(System.currentTimeMillis());
@@ -229,7 +231,7 @@ public class Executor
 			outputValues[i][0] = stateValuePairs[i].getValue();
 		}
 		
-		nn.train(inputValues, outputValues, 5000);
+		nn.train(inputValues, outputValues, 10000);
 		float[] weights = nn.getWeights();
 		
 		for (int i = 0; i < coefficients.length; i++) {
