@@ -14,7 +14,7 @@ try:
         valuesString = row
     for word in valuesString:
         word.strip()
-        values.append(int(word))
+        values.append(float(word))
 
 except IOError:
     print "Input value file not found."
