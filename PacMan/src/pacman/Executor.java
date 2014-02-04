@@ -16,6 +16,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import org.encog.ml.MLRegression;
+import org.encog.ml.data.MLDataSet;
+import org.encog.ml.data.basic.BasicMLDataSet;
+import org.encog.util.simple.EncogUtility;
+
 import neuralNetwork.NeuralNetwork;
 import pacman.controllers.AController;
 import pacman.controllers.Controller;
@@ -67,15 +72,19 @@ public class Executor
 //		NeuralNetworkController nnc = NeuralNetworkController.createFromFile("neurocontroller");
 //		StateValuePair[] svp = getStateValuePairs(loadReplay("replay"), nnc);
 //		StateValuePair[] esvp = extendStateValuePairs(svp);
+//		writeSVPairs(loadReplay("replay"), nnc);
 //		float[] coefficients = getLinearRegressionCoefficients(esvp);
 //		runGame(new MyController(coefficients), new StarterGhosts(), true, 10);
-		MyController ctrl = MyController.createFromFile("linearcontroller");
-		train(ctrl, 10);
+//		MyController ctrl = MyController.createFromFile("linearcontroller");
+//		train(ctrl, 10);
 
+		RBFController rbfc = new RBFController("rbfcontroller");
+//		rbfc.trainNetwork("training.csv");
+//		runGame(rbfc, new StarterGhosts(), true, 10);
+	
+//		MLDataSet data = new BasicMLDataSet(rbfc.getTrainingData("training.csv"));
+//		EncogUtility.evaluate(RBFController.getRbfnet(), data);
 		
-//		RBFController rbfc = new RBFController("rbfcontroller");
-//		rbfc.trainNetwork("training.csv"); // training.csv wird nicht gefunden
-
 		//policy evaluation averaging results from samples (x trials with same seed)
 //		int numTrials=10;
 //		float controllerScore = exec.evalPolicy(NeuralNetworkController.createFromFile("controller"), new StarterGhosts(), numTrials);

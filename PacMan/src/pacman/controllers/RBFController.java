@@ -5,12 +5,12 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
+import org.encog.mathutil.rbf.RBFEnum;
 import org.encog.ml.data.MLData;
 import org.encog.ml.data.MLDataSet;
 import org.encog.ml.data.basic.BasicMLData;
 import org.encog.ml.data.basic.BasicMLDataSet;
 import org.encog.neural.networks.training.propagation.resilient.ResilientPropagation;
-import org.encog.neural.pattern.RadialBasisPattern;
 import org.encog.neural.rbf.RBFNetwork;
 import org.encog.persist.EncogDirectoryPersistence;
 import org.encog.util.csv.ReadCSV;
@@ -27,15 +27,17 @@ public class RBFController extends AController {
         private static RBFNetwork rbfnet;
         
         public RBFController(int input, int hidden, int output) {
-                RadialBasisPattern rbfpat = new RadialBasisPattern(); 
-                rbfpat.addHiddenLayer(hidden);
-                rbfpat.setInputNeurons(input);
-                rbfpat.setOutputNeurons(output);
-                rbfnet = (RBFNetwork) rbfpat.generate();
+        		setRbfnet(new RBFNetwork(input, hidden, output, RBFEnum.Gaussian));
+         //       RadialBasisPattern rbfpat = new RadialBasisPattern(); 
+         //       rbfpat.addHiddenLayer(hidden);
+         //       rbfpat.setInputNeurons(input);
+         //       rbfpat.setOutputNeurons(output);
+                
+             //   rbfnet = (RBFNetwork) rbfpat.generate();
         }
 
         public RBFController(String filename){
-                rbfnet = (RBFNetwork)EncogDirectoryPersistence.loadObject(new File(filename));
+                setRbfnet((RBFNetwork)EncogDirectoryPersistence.loadObject(new File(filename)));
         }
         public MLDataSet getTrainingData(String csvfile) throws IOException {
                 File f = new File(csvfile);
@@ -88,13 +90,13 @@ public class RBFController extends AController {
         		File f = new File(csvfile);
         		if (f.isFile()) {
         			MLDataSet trainingD = getTrainingData("training.csv");
-        			final ResilientPropagation train = new ResilientPropagation(rbfnet,trainingD);
+        			final ResilientPropagation train = new ResilientPropagation(getRbfnet(),trainingD);
         			
         			train.iteration();
         			System.out.println(train.getError());
         			int epoch = 1;
         			int epochSave = 1;
-        			while (train.getError() > 0.1) {
+        			while (train.getError() > 0.001) {
                         train.iteration();
                         System.out.println("Iteration: " + epoch + " Error: "+train.getError());
                         epoch++;
@@ -108,7 +110,7 @@ public class RBFController extends AController {
         }
         
         public static void saveNetwork() {
-                EncogDirectoryPersistence.saveObject(new File("rbfcontroller"), rbfnet);
+                EncogDirectoryPersistence.saveObject(new File("rbfcontroller"), getRbfnet());
         }
         @Override
         public MOVE getMove(Game game, long timeDue) {
@@ -120,7 +122,7 @@ public class RBFController extends AController {
                 
                 if (game.getNeighbour(currentNode, lastMove) != -1) {
                         bestMove = lastMove;
-                        double[] curFeatures = {};
+                        double[] curFeatures = new double[getFeatures(game, currentNode, lastMove).length];
                         for (int i = 0; i < getFeatures(game, currentNode, lastMove).length; i++){
                                 curFeatures[i] = getFeatures(game, currentNode, lastMove)[i];
                         }
@@ -145,8 +147,11 @@ public class RBFController extends AController {
          * get the value estimation for the given state
          */
         public double[] getValueFunctionEstimation(double[] input) {
+        		for (double d : input) {
+        			System.out.println(Double.toString(d));
+        		}
                 MLData mlinput = new BasicMLData(input);
-                return rbfnet.compute(mlinput).getData();
+                return getRbfnet().compute(mlinput).getData();
         }
 
         @Override
@@ -165,5 +170,13 @@ public class RBFController extends AController {
 		public AController copy() {
 			// TODO Auto-generated method stub
 			return null;
+		}
+
+		public static RBFNetwork getRbfnet() {
+			return rbfnet;
+		}
+
+		public static void setRbfnet(RBFNetwork rbfnet) {
+			RBFController.rbfnet = rbfnet;
 		}
 }
