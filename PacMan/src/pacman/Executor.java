@@ -69,7 +69,8 @@ public class Executor
 	 */
 	public static void main(String[] args) throws IOException
 	{
-//		NeuralNetworkController nnc = NeuralNetworkController.createFromFile("neurocontroller");
+		NeuralNetworkController nnc = NeuralNetworkController.createFromFile("neurocontroller");
+//		runGame(nnc, new StarterGhosts(), true, 10);
 //		StateValuePair[] svp = getStateValuePairs(loadReplay("replay"), nnc);
 //		StateValuePair[] esvp = extendStateValuePairs(svp);
 //		writeSVPairs(loadReplay("replay"), nnc);
@@ -80,7 +81,7 @@ public class Executor
 
 		RBFController rbfc = new RBFController("rbfcontroller");
 //		rbfc.trainNetwork("training.csv");
-//		runGame(rbfc, new StarterGhosts(), true, 10);
+		runGame(rbfc, new StarterGhosts(), true, 10);
 	
 //		MLDataSet data = new BasicMLDataSet(rbfc.getTrainingData("training.csv"));
 //		EncogUtility.evaluate(RBFController.getRbfnet(), data);

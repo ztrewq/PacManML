@@ -18,6 +18,7 @@ import org.encog.util.csv.ReadCSV;
 import pacman.game.Game;
 import pacman.game.Constants.MOVE;
 import static pacman.utils.FeatureUtils.getFeatures;
+import static pacman.utils.FeatureUtils.extendFeatures;
 
 public class RBFController extends AController {
 
@@ -100,7 +101,7 @@ public class RBFController extends AController {
                         train.iteration();
                         System.out.println("Iteration: " + epoch + " Error: "+train.getError());
                         epoch++;
-                        if ((epoch - epochSave)> 4000) {
+                        if ((epoch - epochSave)> 15) {
                                 saveNetwork();
                                 epochSave = epoch;
                         }
@@ -122,19 +123,20 @@ public class RBFController extends AController {
                 
                 if (game.getNeighbour(currentNode, lastMove) != -1) {
                         bestMove = lastMove;
-                        double[] curFeatures = new double[getFeatures(game, currentNode, lastMove).length];
-                        for (int i = 0; i < getFeatures(game, currentNode, lastMove).length; i++){
-                                curFeatures[i] = getFeatures(game, currentNode, lastMove)[i];
+                        double[] curFeatures = new double[extendFeatures(getFeatures(game, currentNode, lastMove)).length];
+                        for (int i = 0; i < extendFeatures(getFeatures(game, currentNode, lastMove)).length; i++){
+                                curFeatures[i] = extendFeatures(getFeatures(game, currentNode, lastMove))[i];
                         }
                         bestMoveValueEstimation = getValueFunctionEstimation(curFeatures)[0];
                 }
                 
                 for (MOVE move : game.getPossibleMoves(game.getPacmanCurrentNodeIndex())) {
-                        double[] features = {};
-                        for (int i = 0; i < getFeatures(game, game.getPacmanCurrentNodeIndex(), move).length;i++){
-                                features[i] = getFeatures(game, game.getPacmanCurrentNodeIndex(), move)[i];
+                        double[] features = new double[extendFeatures(getFeatures(game, currentNode, lastMove)).length];
+                        for (int i = 0; i < extendFeatures(getFeatures(game, game.getPacmanCurrentNodeIndex(), move)).length;i++){
+                                features[i] = extendFeatures(getFeatures(game, game.getPacmanCurrentNodeIndex(), move))[i];
                         }
                         double estimation = getValueFunctionEstimation(features)[0];
+                        System.out.println(Double.toString(estimation));
                         if (bestMoveValueEstimation < estimation) {
                                 bestMoveValueEstimation = estimation;
                                 bestMove = move;
@@ -147,10 +149,8 @@ public class RBFController extends AController {
          * get the value estimation for the given state
          */
         public double[] getValueFunctionEstimation(double[] input) {
-        		for (double d : input) {
-        			System.out.println(Double.toString(d));
-        		}
                 MLData mlinput = new BasicMLData(input);
+                double[] inputDouble = mlinput.getData();
                 return getRbfnet().compute(mlinput).getData();
         }
 

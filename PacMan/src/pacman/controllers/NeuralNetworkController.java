@@ -63,6 +63,7 @@ public class NeuralNetworkController extends AController {
 	}
 	
 	public float getValueFunctionEstimation(float[] input) {
+		System.out.println(Float.toString(valueFunction.getOutput(input)[0]));
 		return valueFunction.getOutput(input)[0];
 	}
 	
