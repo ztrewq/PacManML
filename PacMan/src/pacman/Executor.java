@@ -81,15 +81,15 @@ public class Executor
 //		MyController ctrl = MyController.createFromFile("linearcontroller");
 //		train(ctrl, 10);
 
-//		RBFController rbfc = new RBFController(19, 10, 1);
-		RBFController rbfc = new RBFController("rbfcontroller3");
-		// Using Encog method for training
+		RBFController rbfc = new RBFController(29, 15, 1);
+//		RBFController rbfc = new RBFController("rbfcontroller3");
+//		// Using Encog method for training
 		rbfc.getTrainingData("training.csv");
 		EncogUtility.trainToError(RBFController.getRbfnet(), new BasicMLDataSet(RBFController.INPUT, RBFController.IDEAL), 0.00530);
         EncogDirectoryPersistence.saveObject(new File("rbfcontroller3"), RBFController.getRbfnet());
         
 		// Using own method for training
-//		rbfc.trainNetwork("training.csv", "rbfcontroller2");
+		rbfc.trainNetwork("training.csv", "rbfcontroller3");
 		runGame(rbfc, new StarterGhosts(), true, 10);
 	
 //		MLDataSet data = new BasicMLDataSet(rbfc.getTrainingData("training.csv"));
