@@ -11,6 +11,7 @@ import org.encog.ml.data.MLDataSet;
 import org.encog.ml.data.basic.BasicMLData;
 import org.encog.ml.data.basic.BasicMLDataSet;
 import org.encog.neural.networks.training.propagation.resilient.ResilientPropagation;
+import org.encog.neural.pattern.RadialBasisPattern;
 import org.encog.neural.rbf.RBFNetwork;
 import org.encog.persist.EncogDirectoryPersistence;
 import org.encog.util.csv.ReadCSV;
@@ -28,13 +29,14 @@ public class RBFController extends AController {
         private static RBFNetwork rbfnet;
         
         public RBFController(int input, int hidden, int output) {
-        		setRbfnet(new RBFNetwork(input, hidden, output, RBFEnum.Gaussian));
-         //       RadialBasisPattern rbfpat = new RadialBasisPattern(); 
-         //       rbfpat.addHiddenLayer(hidden);
-         //       rbfpat.setInputNeurons(input);
-         //       rbfpat.setOutputNeurons(output);
+         //		setRbfnet(new RBFNetwork(input, hidden, output, RBFEnum.Gaussian));
+         //		int hidden = (int)Math.pow(dim, input);
+                RadialBasisPattern rbfpat = new RadialBasisPattern(); 
+                rbfpat.addHiddenLayer(hidden);
+                rbfpat.setInputNeurons(input);
+                rbfpat.setOutputNeurons(output);
                 
-             //   rbfnet = (RBFNetwork) rbfpat.generate();
+                rbfnet = (RBFNetwork) rbfpat.generate();
         }
 
         public RBFController(String filename){
@@ -87,7 +89,7 @@ public class RBFController extends AController {
                 }
         }
         
-        public void trainNetwork(String csvfile) throws IOException {
+        public void trainNetwork(String csvfile, String outputfile) throws IOException {
         		File f = new File(csvfile);
         		if (f.isFile()) {
         			MLDataSet trainingD = getTrainingData("training.csv");
@@ -102,16 +104,16 @@ public class RBFController extends AController {
                         System.out.println("Iteration: " + epoch + " Error: "+train.getError());
                         epoch++;
                         if ((epoch - epochSave)> 15) {
-                                saveNetwork();
+                                saveNetwork(outputfile);
                                 epochSave = epoch;
                         }
         			}
         		}
-        			saveNetwork();
+        			saveNetwork(outputfile);
         }
         
-        public static void saveNetwork() {
-                EncogDirectoryPersistence.saveObject(new File("rbfcontroller"), getRbfnet());
+        public static void saveNetwork(String outputfile) {
+                EncogDirectoryPersistence.saveObject(new File(outputfile), getRbfnet());
         }
         @Override
         public MOVE getMove(Game game, long timeDue) {
@@ -123,7 +125,7 @@ public class RBFController extends AController {
                 
                 if (game.getNeighbour(currentNode, lastMove) != -1) {
                         bestMove = lastMove;
-                        double[] curFeatures = new double[extendFeatures(getFeatures(game, currentNode, lastMove)).length];
+                        double[] curFeatures = new double[29];
                         for (int i = 0; i < extendFeatures(getFeatures(game, currentNode, lastMove)).length; i++){
                                 curFeatures[i] = extendFeatures(getFeatures(game, currentNode, lastMove))[i];
                         }
@@ -131,7 +133,7 @@ public class RBFController extends AController {
                 }
                 
                 for (MOVE move : game.getPossibleMoves(game.getPacmanCurrentNodeIndex())) {
-                        double[] features = new double[extendFeatures(getFeatures(game, currentNode, lastMove)).length];
+                        double[] features = new double[29];
                         for (int i = 0; i < extendFeatures(getFeatures(game, game.getPacmanCurrentNodeIndex(), move)).length;i++){
                                 features[i] = extendFeatures(getFeatures(game, game.getPacmanCurrentNodeIndex(), move))[i];
                         }

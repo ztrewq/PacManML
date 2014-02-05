@@ -2,6 +2,7 @@ package pacman;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
@@ -19,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 import org.encog.ml.MLRegression;
 import org.encog.ml.data.MLDataSet;
 import org.encog.ml.data.basic.BasicMLDataSet;
+import org.encog.persist.EncogDirectoryPersistence;
 import org.encog.util.simple.EncogUtility;
 
 import neuralNetwork.NeuralNetwork;
@@ -79,8 +81,15 @@ public class Executor
 //		MyController ctrl = MyController.createFromFile("linearcontroller");
 //		train(ctrl, 10);
 
-		RBFController rbfc = new RBFController("rbfcontroller");
-//		rbfc.trainNetwork("training.csv");
+//		RBFController rbfc = new RBFController(19, 10, 1);
+		RBFController rbfc = new RBFController("rbfcontroller3");
+		// Using Encog method for training
+		rbfc.getTrainingData("training.csv");
+		EncogUtility.trainToError(RBFController.getRbfnet(), new BasicMLDataSet(RBFController.INPUT, RBFController.IDEAL), 0.00530);
+        EncogDirectoryPersistence.saveObject(new File("rbfcontroller3"), RBFController.getRbfnet());
+        
+		// Using own method for training
+//		rbfc.trainNetwork("training.csv", "rbfcontroller2");
 		runGame(rbfc, new StarterGhosts(), true, 10);
 	
 //		MLDataSet data = new BasicMLDataSet(rbfc.getTrainingData("training.csv"));
