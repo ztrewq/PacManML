@@ -154,7 +154,7 @@ public class Executor
 		while (true) {
 			// train
 			gradient = getGradient(pacManController, numTrials);
-			pacManController.setPolicyParameters((add((pacManController.getPolicyParameters()), scale(gradient, learningRate))));
+			pacManController.setPolicyParameters(normalize(add(normalize(pacManController.getPolicyParameters()), scale(gradient, learningRate))));
 			float currentEvaluation = Utils.evalPolicy(pacManController, numTrials);
 			writeValues(pacManController, currentEvaluation, "valuesLin.txt");
 			System.out.println("new evaluation : " + currentEvaluation);
