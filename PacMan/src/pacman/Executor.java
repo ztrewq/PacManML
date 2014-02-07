@@ -49,6 +49,8 @@ import pacman.game.Constants.MOVE;
 import pacman.gradient.Gradient;
 import pacman.gradient.gradientEstimate;
 import pacman.utils.FeatureUtils;
+import pacman.utils.ParaValueList;
+import pacman.utils.ParaValuePair;
 import pacman.utils.Savelist;
 import pacman.utils.Utils;
 import static pacman.game.Constants.*;
@@ -72,26 +74,27 @@ public class Executor
 	 */
 	public static void main(String[] args) throws IOException
 	{
-		NeuralNetworkController nnc = NeuralNetworkController.createFromFile("neurocontroller");
+		//NeuralNetworkController nnc = NeuralNetworkController.createFromFile("neurocontroller");
 //		runGame(nnc, new StarterGhosts(), true, 10);
 //		StateValuePair[] svp = getStateValuePairs(loadReplay("replay"), nnc);
 //		StateValuePair[] esvp = extendStateValuePairs(svp);
 //		writeSVPairs(loadReplay("replay"), nnc);
 //		float[] coefficients = getLinearRegressionCoefficients(esvp);
 //		runGame(new MyController(coefficients), new StarterGhosts(), true, 10);
-//		MyController ctrl = MyController.createFromFile("linearcontroller");
-//		train(ctrl, 10);
+		MyController ctrl = MyController.createFromFile("linearcontroller");
+		//runGame(ctrl, new StarterGhosts(), true, 10);
+		train(ctrl, 10);
 
-		RBFController rbfc = new RBFController(29, 5, 1);
+//		RBFController rbfc = new RBFController(29, 5, 1);
 //		RBFController rbfc = new RBFController("rbfcontroller2");
 //		// Using Encog method for training
-		rbfc.getTrainingData("training.csv");
-		EncogUtility.trainToError(RBFController.getRbfnet(), new BasicMLDataSet(RBFController.INPUT, RBFController.IDEAL), 0.006);
+//		rbfc.getTrainingData("training.csv");
+//		EncogUtility.trainToError(RBFController.getRbfnet(), new BasicMLDataSet(RBFController.INPUT, RBFController.IDEAL), 0.006);
 //        EncogDirectoryPersistence.saveObject(new File("rbfcontroller2"), RBFController.getRbfnet());
         
 		// Using own method for training
 //		rbfc.trainNetwork("training.csv", "rbfcontroller3");
-		runGame(rbfc, new StarterGhosts(), true, 10);
+//		runGame(rbfc, new StarterGhosts(), true, 10);
 	
 //		MLDataSet data = new BasicMLDataSet(rbfc.getTrainingData("training.csv"));
 //		EncogUtility.evaluate(RBFController.getRbfnet(), data);
@@ -147,21 +150,21 @@ public class Executor
 		//float learningRate = (float)1e-9;
 		float learningRate = 0.000000000001f;
 		float[] gradient = null;
-		Savelist saveList = new Savelist();
+		ParaValueList paraValue = new ParaValueList();
 		while (true) {
 			// train
 			gradient = getGradient(pacManController, numTrials);
-			pacManController.setPolicyParameters(normalize(add(normalize(pacManController.getPolicyParameters()), scale(gradient, learningRate))));
+			pacManController.setPolicyParameters((add((pacManController.getPolicyParameters()), scale(gradient, learningRate))));
 			float currentEvaluation = Utils.evalPolicy(pacManController, numTrials);
 			writeValues(pacManController, currentEvaluation, "valuesLin.txt");
 			System.out.println("new evaluation : " + currentEvaluation);
 //			learningRate *= 0.95f;			
-			saveList.add(pacManController.getPolicyParameters());
-			Savelist.writeToFile(saveList, "parameters2");
-			saveList.printLast();
+			paraValue.add(new ParaValuePair(pacManController.getPolicyParameters(), currentEvaluation));
+			ParaValueList.writeToFile(paraValue, "parametersValuePair");
+			paraValue.printLast();
 			if (currentEvaluation > bestEvaluation) {
 				bestEvaluation = currentEvaluation;
-				MyController.writeToFile(pacManController, "linearcontroller2");
+				MyController.writeToFile(pacManController, "linearcontroller3");
 				System.out.println("saved");
 			}
 			/*
