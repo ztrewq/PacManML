@@ -49,6 +49,7 @@ import pacman.game.Constants.MOVE;
 import pacman.gradient.Gradient;
 import pacman.gradient.gradientEstimate;
 import pacman.utils.FeatureUtils;
+import pacman.utils.Savelist;
 import pacman.utils.Utils;
 import static pacman.game.Constants.*;
 import static pacman.utils.Utils.*;
@@ -143,8 +144,10 @@ public class Executor
 		float bestEvaluation = Utils.evalPolicy(pacManController, numTrials);
 		System.out.println("evaluation before training: " + bestEvaluation);
 		
-		float learningRate = (float)1e-9;
+		//float learningRate = (float)1e-9;
+		float learningRate = 0.000000000001f;
 		float[] gradient = null;
+		Savelist saveList = new Savelist();
 		while (true) {
 			// train
 			gradient = getGradient(pacManController, numTrials);
@@ -153,7 +156,9 @@ public class Executor
 			writeValues(pacManController, currentEvaluation, "valuesLin.txt");
 			System.out.println("new evaluation : " + currentEvaluation);
 //			learningRate *= 0.95f;			
-			
+			saveList.add(pacManController.getPolicyParameters());
+			Savelist.writeToFile(saveList, "parameters2");
+			saveList.printLast();
 			if (currentEvaluation > bestEvaluation) {
 				bestEvaluation = currentEvaluation;
 				MyController.writeToFile(pacManController, "linearcontroller2");
