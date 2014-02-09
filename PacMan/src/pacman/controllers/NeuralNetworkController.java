@@ -4,6 +4,7 @@ import neuralNetwork.NeuralNetwork;
 import pacman.game.Constants.MOVE;
 import pacman.game.Game;
 import pacman.utils.FeatureUtils;
+import pacman.utils.Vector;
 
 public class NeuralNetworkController extends AController {
 
@@ -20,7 +21,7 @@ public class NeuralNetworkController extends AController {
 		MOVE lastMove = game.getPacmanLastMoveMade();
 		
 		MOVE bestMove = MOVE.NEUTRAL;
-		float bestMoveValueEstimation = Float.NEGATIVE_INFINITY;
+		double bestMoveValueEstimation = Float.NEGATIVE_INFINITY;
 		
 		if (game.getNeighbour(currentNode, lastMove) != -1) {
 			bestMove = lastMove;
@@ -28,8 +29,8 @@ public class NeuralNetworkController extends AController {
 		}
 		
 		for (MOVE move : game.getPossibleMoves(game.getPacmanCurrentNodeIndex())) {
-			float[] features = FeatureUtils.getFeatures(game, game.getPacmanCurrentNodeIndex(), move);
-			float estimation = getValueFunctionEstimation(features);
+			Vector features = FeatureUtils.getFeatures(game, game.getPacmanCurrentNodeIndex(), move);
+			double estimation = getValueFunctionEstimation(features);
 			if (bestMoveValueEstimation < estimation) {
 				bestMoveValueEstimation = estimation;
 				bestMove = move;
@@ -62,17 +63,16 @@ public class NeuralNetworkController extends AController {
 		return null;
 	}
 	
-	public float getValueFunctionEstimation(float[] input) {
-		System.out.println(Float.toString(valueFunction.getOutput(input)[0]));
-		return valueFunction.getOutput(input)[0];
+	public double getValueFunctionEstimation(Vector input) {
+		return valueFunction.getOutput(input.getValues())[0];
 	}
 	
-	public float[] getPolicyParameters() {
-		return valueFunction.getWeights();
+	public Vector getPolicyParameters() {
+		return new Vector(valueFunction.getWeights());
 	}
 	
-	public void setPolicyParameters(float[] parameters) {
-		valueFunction = new NeuralNetwork(valueFunction.getTopology(), parameters);
+	public void setPolicyParameters(Vector parameters) {
+		valueFunction = new NeuralNetwork(valueFunction.getTopology(), parameters.getValues());
 	}
 
 	@Override

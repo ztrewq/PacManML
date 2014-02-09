@@ -16,14 +16,12 @@ import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-
+import neuralNetwork.NeuralNetwork;
 import org.encog.ml.MLRegression;
 import org.encog.ml.data.MLDataSet;
 import org.encog.ml.data.basic.BasicMLDataSet;
 import org.encog.persist.EncogDirectoryPersistence;
 import org.encog.util.simple.EncogUtility;
-
-import neuralNetwork.NeuralNetwork;
 import pacman.controllers.AController;
 import pacman.controllers.Controller;
 import pacman.controllers.HumanController;
@@ -47,12 +45,12 @@ import pacman.game.GameView;
 import pacman.game.Constants.GHOST;
 import pacman.game.Constants.MOVE;
 import pacman.gradient.Gradient;
-import pacman.gradient.gradientEstimate;
 import pacman.utils.FeatureUtils;
 import pacman.utils.ParaValueList;
 import pacman.utils.ParaValuePair;
 import pacman.utils.Savelist;
 import pacman.utils.Utils;
+import pacman.utils.Vector;
 import static pacman.game.Constants.*;
 import static pacman.utils.Utils.*;
 import static pacman.utils.FeatureUtils.extendFeatures;
@@ -74,16 +72,16 @@ public class Executor
 	 */
 	public static void main(String[] args) throws IOException
 	{
-		//NeuralNetworkController nnc = NeuralNetworkController.createFromFile("neurocontroller");
-//		runGame(nnc, new StarterGhosts(), true, 10);
-//		StateValuePair[] svp = getStateValuePairs(loadReplay("replay"), nnc);
+//		NeuralNetworkController nnC = NeuralNetworkController.createFromFile("neurocontroller");
+//		runGame(nnC, new StarterGhosts(), true, 10);
+//		StateValuePair[] svp = getStateValuePairs(loadReplay("replay"), nnC);
 //		StateValuePair[] esvp = extendStateValuePairs(svp);
-//		writeSVPairs(loadReplay("replay"), nnc);
-//		float[] coefficients = getLinearRegressionCoefficients(esvp);
+//		writeSVPairs(loadReplay("replay"), nnC);
+//		Vector coefficients = getLinearRegressionCoefficients(esvp);
 //		runGame(new MyController(coefficients), new StarterGhosts(), true, 10);
 		MyController ctrl = MyController.createFromFile("linearcontroller");
-		//runGame(ctrl, new StarterGhosts(), true, 10);
-		train(ctrl, 10);
+//		runGame(ctrl, new StarterGhosts(), true, 10);
+		train(ctrl, 20);
 
 //		RBFController rbfc = new RBFController(29, 5, 1);
 //		RBFController rbfc = new RBFController("rbfcontroller2");
@@ -145,38 +143,42 @@ public class Executor
 	public static void train(MyController pacManController, int numTrials) {
 		GameView gameView = new GameView(new Game(0)).showGame();
 		float bestEvaluation = Utils.evalPolicy(pacManController, numTrials);
+		ParaValueList paraValue = new ParaValueList();
 		System.out.println("evaluation before training: " + bestEvaluation);
 		
-		//float learningRate = (float)1e-9;
-		float learningRate = 0.000000000001f;
-		float[] gradient = null;
-		ParaValueList paraValue = new ParaValueList();
+		// train
+		int n = pacManController.getPolicyParameters().getDimension(); 
+		Vector updateValues = new Vector(n, 0.01); // vector with initial update values
+		Vector oldGradient = new Vector(n); // 0 vector
+		Vector newGradient = new Vector(n); // 0 vector
 		while (true) {
-			// train
-			gradient = getGradient(pacManController, numTrials);
-			pacManController.setPolicyParameters(normalize(add(normalize(pacManController.getPolicyParameters()), scale(gradient, learningRate))));
+			oldGradient = newGradient;
+			newGradient = getGradient(pacManController, numTrials);
+//			newGradient.add(- newGradient.getMean());
+			updateValues = getNewUpdateValues(updateValues, oldGradient, newGradient);
+//			pacManController.setPolicyParameters((pacManController.getPolicyParameters().add(updateValues)).normalize());
+			pacManController.setPolicyParameters(pacManController.getPolicyParameters().add(updateValues));
 			float currentEvaluation = Utils.evalPolicy(pacManController, numTrials);
 			writeValues(pacManController, currentEvaluation, "valuesLin.txt");
 			System.out.println("new evaluation : " + currentEvaluation);
-//			learningRate *= 0.95f;			
 			paraValue.add(new ParaValuePair(pacManController.getPolicyParameters(), currentEvaluation));
 			ParaValueList.writeToFile(paraValue, "parametersValuePair");
 			paraValue.printLast();
 			if (currentEvaluation > bestEvaluation) {
 				bestEvaluation = currentEvaluation;
-				MyController.writeToFile(pacManController, "linearcontroller3");
+				pacManController.writeToFile("linearcontroller3");
 				System.out.println("saved");
 			}
-			/*
+			
 			// demonstrate controller 
-			Game game = new Game(System.currentTimeMillis());
-			gameView.setGame(game);
-			StarterGhosts ghostController = new StarterGhosts();
-			while(!game.gameOver()) {
-				game.advanceGame(pacManController.getMove(game, -1), ghostController.getMove(game,-1));
-		        try{Thread.sleep(10);}catch(Exception e){}
-		        gameView.repaint();
-			}*/
+//			Game game = new Game(System.currentTimeMillis());
+//			gameView.setGame(game);
+//			StarterGhosts ghostController = new StarterGhosts();
+//			while(!game.gameOver()) {
+//				game.advanceGame(pacManController.getMove(game, -1), ghostController.getMove(game,-1));
+//		        try{Thread.sleep(2);}catch(Exception e){}
+//		        gameView.repaint();
+//			}
 		}
 	}
 	
@@ -195,13 +197,14 @@ public class Executor
 		}
 	
 	}
-	//gradient estimation
-	public static float[] gradientEstimation(AController pacManController,Controller<EnumMap<GHOST,MOVE>> ghostController) {
-		int numTrials=10;
-		Gradient grad;
-		gradientEstimate gr = new gradientEstimate();
-		return gr.FiniteDifferenceGradientEvaluation(pacManController, ghostController, numTrials);
-	}
+	
+//	//gradient estimation
+//	public static float[] gradientEstimation(AController pacManController,Controller<EnumMap<GHOST,MOVE>> ghostController) {
+//		int numTrials=10;
+//		Gradient grad;
+//		gradientEstimate gr = new gradientEstimate();
+//		return gr.FiniteDifferenceGradientEvaluation(pacManController, ghostController, numTrials);
+//	}
 
     public static void writeSVPairs(ArrayList<String> replayStates, NeuralNetworkController nnC) {
         BufferedWriter br = null;
@@ -210,11 +213,11 @@ public class Executor
             StateValuePair[] svPairs = getStateValuePairs(replayStates, nnC);
             StateValuePair[] extSvPairs = extendStateValuePairs(svPairs);
             for (StateValuePair sv : extSvPairs) {
-                float[] features = sv.getState();
-                float estimation = sv.getValue();
+                double[] features = sv.getState().getValues();
+                double estimation = sv.getValue();
                 for (int i = 0; i < features.length;i++)
-                    br.write(Float.toString(features[i])+",");
-                br.write(Float.toString(estimation));
+                    br.write(Double.toString(features[i])+",");
+                br.write(Double.toString(estimation));
                 br.newLine();
             }
         }
@@ -234,9 +237,9 @@ public class Executor
 			game.setGameState(state);	
 			int currentNode = game.getPacmanCurrentNodeIndex();
 			for (MOVE move : game.getPossibleMoves(game.getPacmanCurrentNodeIndex())) {
-				float[] features = FeatureUtils.getFeatures(game, currentNode, move);
-				float[] estimation = new float[] {neuralNetworkController.getValueFunctionEstimation(features)};
-				stateValuePairList.add(new StateValuePair(features, estimation[0]));
+				Vector features = FeatureUtils.getFeatures(game, currentNode, move);
+				double estimation = neuralNetworkController.getValueFunctionEstimation(features);
+				stateValuePairList.add(new StateValuePair(features, estimation));
 			}
 		}
 		
@@ -259,29 +262,29 @@ public class Executor
 		return extendedStateValuePairs;
 	}
 	
-	public static float[] getLinearRegressionCoefficients(StateValuePair[] stateValuePairs) {
+	public static Vector getLinearRegressionCoefficients(StateValuePair[] stateValuePairs) {
 		if (stateValuePairs.length == 0)
 			throw new IllegalArgumentException();
 		
-		float[] coefficients = new float[stateValuePairs[0].getState().length];
+		double[] coefficients = new double[stateValuePairs[0].getState().getDimension()];
 		NeuralNetwork nn = new NeuralNetwork(new int[] {coefficients.length, 1});
 		
-		float[][] inputValues = new float[stateValuePairs.length][coefficients.length];
-		float[][] outputValues = new float[stateValuePairs.length][1];
+		double[][] inputValues = new double[stateValuePairs.length][coefficients.length];
+		double[][] outputValues = new double[stateValuePairs.length][1];
 		
 		for (int i = 0; i < stateValuePairs.length; i++) {
-			inputValues[i] = stateValuePairs[i].getState();
+			inputValues[i] = stateValuePairs[i].getState().getValues();
 			outputValues[i][0] = stateValuePairs[i].getValue();
 		}
 		
-		nn.train(inputValues, outputValues, 10000);
-		float[] weights = nn.getWeights();
+		nn.train(inputValues, outputValues, 15000);
+		double[] weights = nn.getWeights();
 		
 		for (int i = 0; i < coefficients.length; i++) {
 			coefficients[i] = weights[i+1];
 		}
 		
-		return coefficients;
+		return new Vector(coefficients);
 	}
 	
     /**

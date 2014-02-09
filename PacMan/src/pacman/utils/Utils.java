@@ -2,11 +2,9 @@ package pacman.utils;
 
 import java.util.EnumMap;
 import java.util.Random;
-
 import Jama.Matrix;
 import pacman.controllers.AController;
 import pacman.controllers.Controller;
-import pacman.controllers.NeuralNetworkController;
 import pacman.controllers.examples.StarterGhosts;
 import pacman.game.Game;
 import pacman.game.Constants.GHOST;
@@ -17,116 +15,87 @@ public class Utils {
 	/**
 	 * get the policy gradient of the current pacmanController using finite-difference
 	 */
-	public static float[] getGradient(AController pacmanController, int numTrials) {
-		float[] initialCoefficients = normalize(pacmanController.getPolicyParameters());
-		float initialEvaluation = evalPolicy(pacmanController, numTrials);
+	public static Vector getGradient(AController pacmanController, int numTrials) {
+		Vector initialParameters = pacmanController.getPolicyParameters();
+		double initialEvaluation = evalPolicy(pacmanController, numTrials);
+		int dimension = initialParameters.getDimension();
 		
-		int runs = 8;
-		float[][] coeffVariations = new float[runs][];
-		float[][] coeffEvaluations = new float[runs][1];
+		int runs = 16;
+		double[][] parametersVariations = new double[runs][];
+		double[][] parametersEvaluations = new double[runs][1];
 		for (int i = 0; i < runs; i++) {
-			coeffVariations[i] = add(copy(initialCoefficients), getRandomVector(initialCoefficients.length, 0, 0.05f));
-			pacmanController.setPolicyParameters(coeffVariations[i]);
-			coeffEvaluations[i][0] = evalPolicy(pacmanController, numTrials) - initialEvaluation;
+			Vector parametersVariation = Vector.getRandomVector(dimension, 0, 0.05);
+			Vector newParameters = initialParameters.copy().add(parametersVariation);
+			pacmanController.setPolicyParameters(newParameters);
+			parametersVariations[i] = parametersVariation.getValues();
+			parametersEvaluations[i][0] = evalPolicy(pacmanController, numTrials) - initialEvaluation;
 		}
 		
-		pacmanController.setPolicyParameters(initialCoefficients);
+		pacmanController.setPolicyParameters(initialParameters);
 		
 		try {
-			Matrix theta = new Matrix(getDoubles(coeffVariations));
-			Matrix j = new Matrix(getDoubles(coeffEvaluations));
+			Matrix theta = new Matrix(parametersVariations);
+			Matrix j = new Matrix(parametersEvaluations);
 			Matrix g = (((((theta.transpose()).times(theta)).inverse()).times(theta.transpose())).times(j));
-			return getFloats(g.getColumnPackedCopy());
+			return new Vector(g.getColumnPackedCopy());
 		} catch (Exception e) {
-			return new float[initialCoefficients.length]; // 0 vector
+			return new Vector(initialParameters.getDimension()); // 0 vector
 		}
 	}
 	
-	/**
-	 * return a copy of vector x
-	 */
-	public static float[] copy(float[] x) {
+	public static Vector getNewUpdateValues(Vector oldUpdateValues, Vector oldGradient, Vector newGradient) {
+		double lambdaPlus = 1.2;
+		double lambdaMinus = 0.5;
+		double min = 1e-7;
+		double max = 0.01;
+		
+		double[] newUpdateValues = new double[oldUpdateValues.getDimension()];
+		for (int i = 0; i < newUpdateValues.length; i++) {
+			double x = oldGradient.getAt(i) * newGradient.getAt(i);
+			double updateValue = oldUpdateValues.getAt(i);
+			
+			if (x > 0)
+				updateValue *= lambdaPlus;
+			else if (x < 0)
+				updateValue *= lambdaMinus;
+			
+			updateValue = clamp(Math.abs(updateValue), min, max);
+			
+			if (newGradient.getAt(i) > 0)
+				newUpdateValues[i] = updateValue;
+			else if (newGradient.getAt(i) < 0)
+				newUpdateValues[i] = -updateValue;
+		}
+		
+		return new Vector(newUpdateValues);
+	}
+	
+	public static float[] subtractMean(float[] x) {
+		float mean = 0;
+		for (int i = 0; i < x.length; i++) {
+			mean += x[i];
+		}
+		mean /= x.length;
+		
 		float[] y = new float[x.length];
 		for (int i = 0; i < x.length; i++) {
-			y[i] = x[i];
+			y[i] = x[i] - mean;
 		}
 		
 		return y;
 	}
 	
 	/**
-	 * add vector y to vector x
+	 * clamp x between min and max
 	 */
-	public static float[] add(float[] x, float[] y) {
-		for (int i = 0; i < x.length; i++) {
-			x[i] += y[i];
-		}
+	private static double clamp(double x, double min, double max) {
+		if (max < min)
+			throw new IllegalArgumentException();
+		if (x < min)
+			return min;
+		if (x > max)
+			return max;
 		return x;
-	}
-	
-	/**
-	 * normalize vector x to unit length
-	 */
-	public static float[] normalize(float[] x) {
-		float length = getLength(x);
-		scale(x, 1 / length);
-		return x;
-	}
-	
-	/**
-	 * get the length of vector x
-	 */
-	public static float getLength(float[] x) {
-		float length = 0;
-		for (int i = 0; i < x.length; i++) {
-			length += x[i] * x[i];
-		}
-		
-		return (float) Math.sqrt(length);
-	}
-	
-	/**
-	 * scale every entry of vector x with scalar s
-	 */
-	public static float[] scale(float[] x, float s) {
-		for (int i = 0; i < x.length; i++) {
-			x[i] *= s;
-		}
-		
-		return x;
-	}
-	
-	/**
-	 * get a random vector of length n containing random values between min and max
-	 */
-	public static float[] getRandomVector(int n, float min, float max) {
-		float[] x = new float[n];
-		for (int i = 0; i < x.length; i++) {
-			x[i] = (float)Math.random() * (max - min) + min;
-		}
-		
-		return x;
-	}
-	
-	public static double[][] getDoubles(float[][] f) {
-		double[][] d = new double[f.length][];
-		for (int i = 0; i < d.length; i++) {
-			d[i] = new double[f[i].length];
-			for (int j = 0; j < d[i].length; j++) {
-				d[i][j] = f[i][j];
-			}
-		}
-		
-		return d;
-	}
-	
-	public static float[] getFloats(double[] d) {
-		float[] f = new float[d.length];
-		for (int i = 0; i < d.length; i++) {
-			f[i] = (float) d[i];
-		}
-		
-		return f;
 	}
 
 	public static float evalPolicy(AController pacManController, int trials) {

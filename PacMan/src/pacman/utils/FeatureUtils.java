@@ -17,7 +17,7 @@ public class FeatureUtils {
 	/**
 	 * get the features vector relative to nodeIndex and move
 	 */
-	public static float[] getFeatures(Game game, int nodeIndex, MOVE move) {
+	public static Vector getFeatures(Game game, int nodeIndex, MOVE move) {
 		LinkedList<Integer> normalGhosts = new LinkedList<Integer>();
 		LinkedList<Integer> edibleGhosts = new LinkedList<Integer>();
 
@@ -31,7 +31,7 @@ public class FeatureUtils {
 			}
 		}
 
-		float[] features = new float[12];
+		double[] features = new double[12];
 		features[0] = getSavePathLength(game, nodeIndex, move, 110);
 		features[1] = getNumberOfSavePaths(game, nodeIndex, move, 50);
 		features[2] = getJunctionDistance(game, nodeIndex, move);
@@ -45,35 +45,35 @@ public class FeatureUtils {
 		features[10] = getMinimumDistance(game, game.getNeighbour(nodeIndex, move), move.opposite(), toArray(normalGhosts));
 		features[11] = move == game.getPacmanLastMoveMade().opposite() ? 1 : 0;
 
-		return features;
+		return new Vector(features);
 	}
 
-	public static float[] extendFeatures(float[] features) {
-		float[] extendedFeatures = new float[29];
+	public static Vector extendFeatures(Vector features) {
+		double[] extendedFeatures = new double[29];
 		int index = 0;
 
 		// copy old features
-		for (float feature : features) {
+		for (double feature : features.getValues()) {
 			extendedFeatures[index++] = feature;
 		}
 
 		// add squared value of features 0-5 and 7-9
 		for (int j = 0; j <= 5; j++)
-			extendedFeatures[index++] = features[j] * features[j];
+			extendedFeatures[index++] = features.getAt(j) * features.getAt(j);
 		for (int j = 7; j <= 9; j++)
-			extendedFeatures[index++] = features[j] * features[j];
+			extendedFeatures[index++] = features.getAt(j) * features.getAt(j);
 
 		// add some further featuers
-		extendedFeatures[index++] = (1 - features[7]) * features[8]; // edible ghosts
-		extendedFeatures[index++] = features[0] - features[2]; // safe path length after junction
-		extendedFeatures[index++] = features[9] - features[2]; // danger value
-		extendedFeatures[index++] = features[9] - features[5]; // distance difference ghost powerPill
-		extendedFeatures[index++] = features[0] - features[4];
-		extendedFeatures[index++] = features[0] - features[5];
-		extendedFeatures[index++] = features[0] - features[7];
-		extendedFeatures[index++] = features[0] - features[9];
+		extendedFeatures[index++] = (1 - features.getAt(7)) * features.getAt(8); // edible ghosts
+		extendedFeatures[index++] = features.getAt(0) - features.getAt(2); // safe path length after junction
+		extendedFeatures[index++] = features.getAt(9) - features.getAt(2); // danger value
+		extendedFeatures[index++] = features.getAt(9) - features.getAt(5); // distance difference ghost powerPill
+		extendedFeatures[index++] = features.getAt(0) - features.getAt(4);
+		extendedFeatures[index++] = features.getAt(0) - features.getAt(5);
+		extendedFeatures[index++] = features.getAt(0) - features.getAt(7);
+		extendedFeatures[index++] = features.getAt(0) - features.getAt(9);
 
-		return extendedFeatures;
+		return new Vector(extendedFeatures);
 	}
 
 	/**
@@ -88,7 +88,7 @@ public class FeatureUtils {
 	    return integers;
 	}
 
-	private static float getNumberOfSavePaths(Game game, int nodeIndex, MOVE initialMove, int depthLimit) {
+	private static double getNumberOfSavePaths(Game game, int nodeIndex, MOVE initialMove, int depthLimit) {
 		// for each living ghost get the path to next junction
 		EnumMap<GHOST, int[]> ghostJunctionPaths = getGhostJunctionPaths(game);
 
@@ -119,24 +119,24 @@ public class FeatureUtils {
 			}
 		}
 
-		return (float) paths / 15;
+		return (double) paths / 15;
 	}
 
 	/**
 	 * get the distance to the next junction
 	 */
-	private static float getJunctionDistance(Game game, int nodeIndex, MOVE initialMove) {
+	private static double getJunctionDistance(Game game, int nodeIndex, MOVE initialMove) {
 		if (game.getNeighbour(nodeIndex, initialMove) == -1)
 			throw new IllegalArgumentException("invalid move given");
 
 		int[] pathToFirstJunction = getJunctionPath(game, game.getNeighbour(nodeIndex, initialMove), initialMove);
-		return (float) pathToFirstJunction.length / MAX_DISTANCE;
+		return (double) pathToFirstJunction.length / MAX_DISTANCE;
 	}
 
 	/**
 	 * get the number of pills in the given direction until a junction is reached
 	 */
-	private static float getPillsInDirection(Game game, int nodeIndex, MOVE initialMove) {
+	private static double getPillsInDirection(Game game, int nodeIndex, MOVE initialMove) {
 		int[] pathToJunction = getJunctionPath(game, nodeIndex, initialMove);
 		int pills = 0;
 		for (int node : pathToJunction) {
@@ -146,13 +146,13 @@ public class FeatureUtils {
 				pills++;
 		}
 
-		return (float) pills / (game.getNumberOfPills() + game.getNumberOfPowerPills());
+		return (double) pills / (game.getNumberOfPills() + game.getNumberOfPowerPills());
 	}
 
 	/**
 	 * get the minimum path distance needed to reach any node in goalNodeIndices starting in startNodeIndex and taking the initialMove.
 	 */
-	private static float getMinimumDistance(Game game, int startNodeIndex, MOVE initialMove, int[] goalNodeIndices) {
+	private static double getMinimumDistance(Game game, int startNodeIndex, MOVE initialMove, int[] goalNodeIndices) {
 		if (game.getNeighbour(startNodeIndex, initialMove) == -1)
 			throw new IllegalArgumentException("invalid move given");
 
@@ -188,13 +188,13 @@ public class FeatureUtils {
 						}
 					}
 
-					return (float) minDist / MAX_DISTANCE;
+					return (double) minDist / MAX_DISTANCE;
 				}
 
 				// test if any goal is reached
 				for (int goalNodeIndex : goalNodeIndices) {
 					if (node.nodeIndex == goalNodeIndex)
-						return (float) node.depth / MAX_DISTANCE;
+						return (double) node.depth / MAX_DISTANCE;
 				}
 
 				// don't expand further if depth limit is reached
@@ -216,7 +216,7 @@ public class FeatureUtils {
 	/**
 	 * get the remaining edible time for all edible ghosts
 	 */
-	private static float getRemainingEdibleTime(Game game) {
+	private static double getRemainingEdibleTime(Game game) {
 		int time = 0;
 		for (GHOST ghost : GHOST.values()) {
 			if (game.getGhostEdibleTime(ghost) > 0) {
@@ -225,13 +225,13 @@ public class FeatureUtils {
 			}
 		}
 
-		return (float) time / Constants.EDIBLE_TIME;
+		return (double) time / Constants.EDIBLE_TIME;
 	}
 
 	/**
 	 * get the length of the longest save path
 	 */
-	private static float getSavePathLength(Game game, int nodeIndex, MOVE initialMove, int depthLimit) {
+	private static double getSavePathLength(Game game, int nodeIndex, MOVE initialMove, int depthLimit) {
 		// assure a general depth limit
 		depthLimit = Math.min(depthLimit, MAX_DISTANCE);
 
@@ -259,7 +259,7 @@ public class FeatureUtils {
 
 			// don't expand further if depth limit is reached
 			if (node.depth >= depthLimit)
-				return (float) node.depth / MAX_DISTANCE;
+				return (double) node.depth / MAX_DISTANCE;
 
 			// update maxDepth
 			maxDepth = node.depth;
@@ -290,7 +290,7 @@ public class FeatureUtils {
 
 			// don't expand further if depth limit is reached
 			if (node.depth > depthLimit)
-				return (float) depthLimit / MAX_DISTANCE;
+				return (double) depthLimit / MAX_DISTANCE;
 
 			// expand frontier
 			for (MOVE move : game.getPossibleMoves(node.nodeIndex)) {
@@ -321,13 +321,13 @@ public class FeatureUtils {
 		}
 
 		maxDepth = Math.min(maxDepth, depthLimit);
-		return (float) maxDepth / MAX_DISTANCE;
+		return (double) maxDepth / MAX_DISTANCE;
 	}
 
 	/**
 	 * test if the current level is completable by following the path to the next junction
 	 */
-	private static float completable(Game game, int nodeIndex, MOVE initialMove) {
+	private static double completable(Game game, int nodeIndex, MOVE initialMove) {
 		EnumMap<GHOST, int[]> ghostJunctionPaths = getGhostJunctionPaths(game);
 		int remainingPills = game.getNumberOfActivePills() + game.getNumberOfActivePowerPills();
 		int safelyEdiblePills = 0;

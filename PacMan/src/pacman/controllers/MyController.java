@@ -5,18 +5,18 @@ import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.util.Arrays;
-
 import pacman.game.Constants.MOVE;
 import pacman.game.Game;
+import pacman.utils.Vector;
 import static pacman.utils.FeatureUtils.*;
 
 public class MyController extends AController implements Serializable{
 
+	private static final long serialVersionUID = 1L;
 	private LinearFunction valueFunction;
 
-	public MyController(float[] coefficients) {
-		valueFunction = new LinearFunction(coefficients);
+	public MyController(Vector parameters) {
+		valueFunction = new LinearFunction(parameters);
 	}
 
 	@Override
@@ -25,7 +25,7 @@ public class MyController extends AController implements Serializable{
 		MOVE lastMove = game.getPacmanLastMoveMade();
 
 		MOVE bestMove = MOVE.NEUTRAL;
-		float bestMoveValueEstimation = Float.NEGATIVE_INFINITY;
+		double bestMoveValueEstimation = Float.NEGATIVE_INFINITY;
 
 		if (game.getNeighbour(currentNode, lastMove) != -1) {
 			bestMove = lastMove;
@@ -33,8 +33,8 @@ public class MyController extends AController implements Serializable{
 		}
 
 		for (MOVE move : game.getPossibleMoves(game.getPacmanCurrentNodeIndex())) {
-			float[] features = extendFeatures(getFeatures(game, game.getPacmanCurrentNodeIndex(), move));
-			float estimation = getValueFunctionEstimation(features);
+			Vector features = extendFeatures(getFeatures(game, game.getPacmanCurrentNodeIndex(), move));
+			double estimation = getValueFunctionEstimation(features);
 			if (bestMoveValueEstimation < estimation) {
 				bestMoveValueEstimation = estimation;
 				bestMove = move;
@@ -44,47 +44,40 @@ public class MyController extends AController implements Serializable{
 		return bestMove;
 	}
 
-	public float getValueFunctionEstimation(float[] input) {
+	public double getValueFunctionEstimation(Vector input) {
 		return valueFunction.getOutput(input);
 	}
 
-	public float[] getPolicyParameters() {
+	public Vector getPolicyParameters() {
 		return valueFunction.getCoefficients();
 	}
 
-	public void setPolicyParameters(float[] coefficients) {
-		valueFunction.setCoefficients(coefficients);
+	public void setPolicyParameters(Vector parameters) {
+		valueFunction.setCoefficients(parameters);
 	}
 
 	private class LinearFunction implements Serializable{
 
-		private float[] coefficients;
+		private static final long serialVersionUID = 1L;
+		private Vector coefficients;
 
-		public LinearFunction(float[] coefficients) {
-			this.coefficients = Arrays.copyOf(coefficients, coefficients.length);
+		public LinearFunction(Vector coefficients) {
+			this.coefficients = coefficients.copy();
 		}
 
-		public float getOutput(float[] input) {
-			if (input.length != coefficients.length)
+		public double getOutput(Vector input) {
+			return coefficients.dot(input);
+		}
+
+		public void setCoefficients(Vector coefficients) {
+			if (coefficients.getDimension() != this.coefficients.getDimension())
 				throw new IllegalArgumentException();
 
-			float result = 0;
-			for (int i = 0; i < coefficients.length; i++) {
-				result += input[i] * coefficients[i];
-			}
-
-			return result;
+			this.coefficients = coefficients.copy();
 		}
 
-		public void setCoefficients(float[] coefficients) {
-			if (coefficients.length != this.coefficients.length)
-				throw new IllegalArgumentException();
-
-			this.coefficients = Arrays.copyOf(coefficients, coefficients.length);
-		}
-
-		public float[] getCoefficients() {
-			return Arrays.copyOf(coefficients, coefficients.length);
+		public Vector getCoefficients() {
+			return coefficients.copy();
 		}
 
 	}
@@ -94,28 +87,32 @@ public class MyController extends AController implements Serializable{
 		return new MyController(valueFunction.coefficients);
 	}
 
-	//Loads Controller from file
+	/**
+	 * Loads Controller from file
+	 */
 	public static MyController createFromFile(String file){
 		
 		try{
-			FileInputStream fout = new FileInputStream("data/"+file+".sav");
-			ObjectInputStream out = new ObjectInputStream(fout);
-			MyController ret = (MyController)out.readObject();
-			out.close();
-			fout.close();
-			return ret;
+			FileInputStream fin = new FileInputStream("data/"+file+".sav");
+			ObjectInputStream in = new ObjectInputStream(fin);
+			MyController controller = (MyController)in.readObject();
+			in.close();
+			fin.close();
+			return controller;
 		}catch(Exception e){
 			System.out.println("CANT CREATE MYCONTROLLER FROM FILE: data/" +file+".sav :"+e);
 		}
 		return null;
 	}
 	
-	//Writes Controller to file
-	public static void writeToFile(MyController ctrl, String file){
+	/**
+	 * Writes Controller to file
+	 */
+	public void writeToFile(String file){
 		try{
 			FileOutputStream fout = new FileOutputStream("data/"+file+".sav");
 			ObjectOutputStream out = new ObjectOutputStream(fout);
-			out.writeObject(ctrl);
+			out.writeObject(this);
 			out.close();
 			fout.close();
 		}catch(Exception e){

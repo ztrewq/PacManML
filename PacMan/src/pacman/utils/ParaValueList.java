@@ -8,6 +8,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 
 public class ParaValueList implements Serializable{
+
+	private static final long serialVersionUID = 1L;
 	private ArrayList<ParaValuePair> list = new ArrayList<ParaValuePair>();
 	
 	public void add(ParaValuePair pair){
@@ -22,9 +24,9 @@ public class ParaValueList implements Serializable{
 		}
 	}
 
-	private void println(float[] fs) {
-		for(int i = 0; i < fs.length; i++){
-			System.out.print(fs[i]+"; ");
+	private void println(Vector fs) {
+		for(int i = 0; i < fs.getDimension(); i++){
+			System.out.print(fs.getAt(i) + "; ");
 		}
 		System.out.println();
 	}

@@ -1,20 +1,22 @@
 package pacman.controllers;
 
+import pacman.utils.Vector;
+
 public class StateValuePair {
 	
-	private final float[] state;
-	private final float value;
+	private final Vector state;
+	private final double value;
 	
-	public StateValuePair(float[] state, float value) {
+	public StateValuePair(Vector state, double value) {
 		this.state = state;
 		this.value = value;
 	}
 	
-	public float[] getState() {
+	public Vector getState() {
 		return state;
 	}
 	
-	public float getValue() {
+	public double getValue() {
 		return value;
 	}
 }

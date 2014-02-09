@@ -18,6 +18,7 @@ import org.encog.util.csv.ReadCSV;
 
 import pacman.game.Game;
 import pacman.game.Constants.MOVE;
+import pacman.utils.Vector;
 import static pacman.utils.FeatureUtils.getFeatures;
 import static pacman.utils.FeatureUtils.extendFeatures;
 
@@ -125,19 +126,11 @@ public class RBFController extends AController {
                 
                 if (game.getNeighbour(currentNode, lastMove) != -1) {
                         bestMove = lastMove;
-                        double[] curFeatures = new double[29];
-                        for (int i = 0; i < extendFeatures(getFeatures(game, currentNode, lastMove)).length; i++){
-                                curFeatures[i] = extendFeatures(getFeatures(game, currentNode, lastMove))[i];
-                        }
-                        bestMoveValueEstimation = getValueFunctionEstimation(curFeatures)[0];
+                        bestMoveValueEstimation = getValueFunctionEstimation(extendFeatures(getFeatures(game, currentNode, lastMove)).getValues())[0];
                 }
                 
                 for (MOVE move : game.getPossibleMoves(game.getPacmanCurrentNodeIndex())) {
-                        double[] features = new double[29];
-                        for (int i = 0; i < extendFeatures(getFeatures(game, game.getPacmanCurrentNodeIndex(), move)).length;i++){
-                                features[i] = extendFeatures(getFeatures(game, game.getPacmanCurrentNodeIndex(), move))[i];
-                        }
-                        double estimation = getValueFunctionEstimation(features)[0];
+                        double estimation = getValueFunctionEstimation(extendFeatures(getFeatures(game, currentNode, lastMove)).getValues())[0];
                         System.out.println(Double.toString(estimation));
                         if (bestMoveValueEstimation < estimation) {
                                 bestMoveValueEstimation = estimation;
@@ -157,13 +150,13 @@ public class RBFController extends AController {
         }
 
         @Override
-        public float[] getPolicyParameters() {
+        public Vector getPolicyParameters() {
                 // TODO Auto-generated method stub
                 return null;
         }
 
         @Override
-        public void setPolicyParameters(float[] parameters) {
+        public void setPolicyParameters(Vector parameters) {
                 // TODO Auto-generated method stub
                 
         }
