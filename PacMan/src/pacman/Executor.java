@@ -79,20 +79,20 @@ public class Executor
 //		writeSVPairs(loadReplay("replay"), nnC);
 //		Vector coefficients = getLinearRegressionCoefficients(esvp);
 //		runGame(new MyController(coefficients), new StarterGhosts(), true, 10);
-		MyController ctrl = MyController.createFromFile("linearcontroller");
+//		MyController ctrl = MyController.createFromFile("linearcontroller");
 //		runGame(ctrl, new StarterGhosts(), true, 10);
-		train(ctrl, 20);
+//		train(ctrl, 20);
 
 //		RBFController rbfc = new RBFController(29, 5, 1);
-//		RBFController rbfc = new RBFController("rbfcontroller2");
+		RBFController rbfc = new RBFController("rbfcontroller2");
 //		// Using Encog method for training
 //		rbfc.getTrainingData("training.csv");
 //		EncogUtility.trainToError(RBFController.getRbfnet(), new BasicMLDataSet(RBFController.INPUT, RBFController.IDEAL), 0.006);
 //        EncogDirectoryPersistence.saveObject(new File("rbfcontroller2"), RBFController.getRbfnet());
         
 		// Using own method for training
-//		rbfc.trainNetwork("training.csv", "rbfcontroller3");
-//		runGame(rbfc, new StarterGhosts(), true, 10);
+//		rbfc.trainNetwork("training.csv", "rbfcontroller2");
+		runGame(rbfc, new StarterGhosts(), true, 10);
 	
 //		MLDataSet data = new BasicMLDataSet(rbfc.getTrainingData("training.csv"));
 //		EncogUtility.evaluate(RBFController.getRbfnet(), data);
@@ -212,13 +212,17 @@ public class Executor
             br = new BufferedWriter(new FileWriter("training.csv"));
             StateValuePair[] svPairs = getStateValuePairs(replayStates, nnC);
             StateValuePair[] extSvPairs = extendStateValuePairs(svPairs);
+            int lncnt = 0;
             for (StateValuePair sv : extSvPairs) {
-                double[] features = sv.getState().getValues();
-                double estimation = sv.getValue();
-                for (int i = 0; i < features.length;i++)
-                    br.write(Double.toString(features[i])+",");
-                br.write(Double.toString(estimation));
-                br.newLine();
+            	if (lncnt < 4000) {
+            		double[] features = sv.getState().getValues();
+            		double estimation = sv.getValue();
+            		for (int i = 0; i < features.length;i++)
+            			br.write(Double.toString(features[i])+",");
+            			br.write(Double.toString(estimation));
+            			br.newLine();
+            	}
+            	lncnt++;
             }
         }
         catch (IOException e) {
