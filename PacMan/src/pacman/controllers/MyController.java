@@ -93,14 +93,14 @@ public class MyController extends AController implements Serializable{
 	public static MyController createFromFile(String file){
 		
 		try{
-			FileInputStream fin = new FileInputStream("data/"+file+".sav");
+			FileInputStream fin = new FileInputStream(file+".sav");
 			ObjectInputStream in = new ObjectInputStream(fin);
 			MyController controller = (MyController)in.readObject();
 			in.close();
 			fin.close();
 			return controller;
 		}catch(Exception e){
-			System.out.println("CANT CREATE MYCONTROLLER FROM FILE: data/" +file+".sav :"+e);
+			System.out.println("CANT CREATE MYCONTROLLER FROM FILE: " +file+".sav :"+e);
 		}
 		return null;
 	}
@@ -110,13 +110,13 @@ public class MyController extends AController implements Serializable{
 	 */
 	public void writeToFile(String file){
 		try{
-			FileOutputStream fout = new FileOutputStream("data/"+file+".sav");
+			FileOutputStream fout = new FileOutputStream(file+".sav");
 			ObjectOutputStream out = new ObjectOutputStream(fout);
 			out.writeObject(this);
 			out.close();
 			fout.close();
 		}catch(Exception e){
-			System.out.println("SAVE ERROR WRITING TO FILE: data/" +file+".sav :"+e);
+			System.out.println("SAVE ERROR WRITING TO FILE: " +file+".sav :"+e);
 		}
 	}
 	
