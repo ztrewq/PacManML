@@ -81,7 +81,7 @@ public class Executor
 //		runGame(new MyController(coefficients), new StarterGhosts(), true, 10);
 //		MyController ctrl = MyController.createFromFile("linearcontroller");
 //		runGame(ctrl, new StarterGhosts(), true, 10);
-//		train(ctrl, 20);
+//		train(ctrl, 25);
 
 //		RBFController rbfc = new RBFController(29, 5, 1);
 		RBFController rbfc = new RBFController("rbfcontroller2");

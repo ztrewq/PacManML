@@ -2,6 +2,7 @@ package pacman.utils;
 
 import java.util.EnumMap;
 import java.util.Random;
+
 import Jama.Matrix;
 import pacman.controllers.AController;
 import pacman.controllers.Controller;
@@ -9,6 +10,7 @@ import pacman.controllers.examples.StarterGhosts;
 import pacman.game.Game;
 import pacman.game.Constants.GHOST;
 import pacman.game.Constants.MOVE;
+import pacman.game.internal.Maze;
 
 public class Utils {
 
@@ -120,8 +122,14 @@ public class Utils {
 	}
 	
 	private static class Evaluator extends Thread {
+		
+		private static final String[] mazes = {
+			"0,0,0,0,0,978,LEFT,3,false,1292,0,40,NEUTRAL,1292,0,60,NEUTRAL,1292,0,80,NEUTRAL,1292,0,100,NEUTRAL,1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111,1111,-1,false,false,false,false,false,false,false",
+			"1,2041,0,0,1,973,LEFT,3,false,1318,0,35,NEUTRAL,1318,0,53,NEUTRAL,1318,0,71,NEUTRAL,1318,0,89,NEUTRAL,111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111,1111,797,false,false,false,false,false,true,false",
+			"2,2589,0,0,2,1060,LEFT,3,false,1379,0,32,NEUTRAL,1379,0,48,NEUTRAL,1379,0,64,NEUTRAL,1379,0,80,NEUTRAL,1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111,1111,2508,false,false,false,false,false,true,false",
+			"3,3925,0,0,3,989,LEFT,3,false,1308,0,29,NEUTRAL,1308,0,43,NEUTRAL,1308,0,58,NEUTRAL,1308,0,72,NEUTRAL,111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111,1111,3904,false,false,false,false,false,true,false"
+			};
 
-		private static final int maxTimeSteps = 7500;
 		private Game game;
 		private Controller<MOVE> pacmanController;
 		private Controller<EnumMap<GHOST,MOVE>> ghostController;
@@ -136,12 +144,17 @@ public class Utils {
 		
 		@Override
 		public void run() {
-			int timeStep = 0;
-			while(!game.wasPacManEaten() && timeStep <= maxTimeSteps) {
-				game.advanceGame(pacmanController.getMove(game, -1), ghostController.getMove(game, -1));
-				timeStep++;
+			for (String maze : mazes) {
+				game.setGameState(maze);
+//				System.out.println(game.getPacmanNumberOfLivesRemaining());
+				int currentLevel = game.getCurrentLevel();
+				while(!game.wasPacManEaten() || game.getCurrentLevel() == currentLevel) {
+					game.advanceGame(pacmanController.getMove(game, -1), ghostController.getMove(game, -1));
+				}
+//				System.out.println("next maze");
+//				if (!game.wasPacManEaten())
+					accumulatedScore.addScore(game.getScore());
 			}
-			accumulatedScore.addScore(game.getScore());
 		}
 	}
 
