@@ -130,7 +130,7 @@ public class RBFController extends AController {
                 }
                 
                 for (MOVE move : game.getPossibleMoves(game.getPacmanCurrentNodeIndex())) {
-                        double estimation = getValueFunctionEstimation(extendFeatures(getFeatures(game, currentNode, lastMove)).getValues())[0];
+                        double estimation = getValueFunctionEstimation(extendFeatures(getFeatures(game, currentNode, move)).getValues())[0];
                         System.out.println(Double.toString(estimation));
                         if (bestMoveValueEstimation < estimation) {
                                 bestMoveValueEstimation = estimation;
