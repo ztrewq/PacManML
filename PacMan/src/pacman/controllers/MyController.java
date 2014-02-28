@@ -62,15 +62,19 @@ public class MyController extends AController implements Serializable{
 			i++;
 		}	
 		
-			/*
-			Vector features = extendFeatures(getFeatures(game, game.getPacmanCurrentNodeIndex(), fmove));
-				double estimation = getValueFunctionEstimation(features);
-				if (bestMoveValueEstimation < estimation) {
-					bestMoveValueEstimation = estimation;
-					bestMove = fmove;
-			}*/
+		double random = Math.random();
+		double aux = 0;
+		i = 0;
+		for (MOVE fmove : filterMove) {
+			if (fmove != null) {
+				aux += chances[i];
+				if (aux >= random)
+					return fmove;
+			}
+			i++;
+		}
 		
-		return null;
+		return MOVE.NEUTRAL;
 	}
 
 	//sum up e^estimation of all moves
