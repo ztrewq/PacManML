@@ -154,7 +154,7 @@ public class FeatureUtils {
 	public static boolean anyGhostFasterToJunction(Game game, int nodeIndex, MOVE move){
 		double savePath = getSavePathLength(game, nodeIndex, move, 110);
 		double junctionDist = getJunctionDistance(game, nodeIndex, move);
-		if(savePath >= junctionDist){
+		if(savePath <= junctionDist){
 			return true;
 		}
 		return false;
