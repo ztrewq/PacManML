@@ -59,16 +59,7 @@ public class MyController extends AController implements Serializable{
 	// check if a single move is sane
 	
 	public boolean isMoveSane(MOVE poss, Game game, int nodeIndex){
-		if (getPillsInDirection(game,nodeIndex, poss) > 0) {
-			int[] path = getJunctionPath(game, nodeIndex, poss);
-			for (GHOST ghost : GHOST.values()) {
-				if(contains(path, game.getGhostCurrentNodeIndex(ghost))) {
-					return false;
-				}
-			}
-            return anyGhostFasterToJunction(game,nodeIndex,poss);
-		}
-		return true;
+        return anyGhostFasterToJunction(game,nodeIndex,poss);
 	}
 		
 		
