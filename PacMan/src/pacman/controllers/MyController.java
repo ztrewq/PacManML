@@ -44,18 +44,45 @@ public class MyController extends AController implements Serializable{
 				j++;
 			}
         }
-
+		double[] chances = new double[filterMove.length];
+		double[] estimations = new double[filterMove.length];
+		int i = 0;
 		for (MOVE fmove : filterMove) {
+			if(fmove != null){
 				Vector features = extendFeatures(getFeatures(game, game.getPacmanCurrentNodeIndex(), fmove));
+				estimations[i] = getValueFunctionEstimation(features);
+			}
+			i++;
+		}	
+		i = 0;
+		for (MOVE fmove : filterMove) {
+			if(fmove != null){
+				chances[i] = Math.pow(Math.E, estimations[i]) / sumOfOther(filterMove, estimations);
+			}
+			i++;
+		}	
+		
+			/*
+			Vector features = extendFeatures(getFeatures(game, game.getPacmanCurrentNodeIndex(), fmove));
 				double estimation = getValueFunctionEstimation(features);
 				if (bestMoveValueEstimation < estimation) {
 					bestMoveValueEstimation = estimation;
 					bestMove = fmove;
-			}
-		}
-		return bestMove;
+			}*/
+		
+		return null;
 	}
 
+	//sum up e^estimation of all moves
+	public double sumOfOther(MOVE[] filterMove, double[] estimations){
+		double ret = 0;
+		for(int i = 0; i < estimations.length; i++){
+			if(filterMove[i] != null ){
+				ret += Math.pow(Math.E, estimations[i]);
+			}
+		}
+		return ret;
+	}
 	// check if a single move is sane
 	
 	public boolean isMoveSane(MOVE poss, Game game, int nodeIndex){
