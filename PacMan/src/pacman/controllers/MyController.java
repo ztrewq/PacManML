@@ -36,23 +36,22 @@ public class MyController extends AController implements Serializable{
 
 		MOVE[] possMove = game.getPossibleMoves(game.getPacmanCurrentNodeIndex());
 		MOVE[] filterMove = new MOVE[possMove.length];
-		for (MOVE move : game.getPossibleMoves(game.getPacmanCurrentNodeIndex())) {
 		for (int i = 0; i < game.getPossibleMoves(game.getPacmanCurrentNodeIndex()).length; i++) {			
 			int j = 0;
-			move = game.getPossibleMoves(game.getPacmanCurrentNodeIndex())[i];
+			MOVE move = game.getPossibleMoves(game.getPacmanCurrentNodeIndex())[i];
 			if (isMoveSane(move, game, currentNode)) {
 				filterMove[j] = move;
 				j++;
 			}
-		}
+        }
+
 		for (MOVE fmove : filterMove) {
 				Vector features = extendFeatures(getFeatures(game, game.getPacmanCurrentNodeIndex(), fmove));
 				double estimation = getValueFunctionEstimation(features);
 				if (bestMoveValueEstimation < estimation) {
 					bestMoveValueEstimation = estimation;
-					bestMove = move;
+					bestMove = fmove;
 			}
-		}
 		}
 		return bestMove;
 	}
