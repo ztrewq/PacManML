@@ -32,6 +32,8 @@ public class MyController extends AController implements Serializable{
 			bestMoveValueEstimation = getValueFunctionEstimation(extendFeatures(getFeatures(game, currentNode, lastMove)));
 		}
 
+		MOVE[] possMove = game.getPossibleMoves(game.getPacmanCurrentNodeIndex());
+		MOVE[] filterMove = filterSaneMoves(possMove, game, game.getPacmanCurrentNodeIndex());
 		for (MOVE move : game.getPossibleMoves(game.getPacmanCurrentNodeIndex())) {
 			Vector features = extendFeatures(getFeatures(game, game.getPacmanCurrentNodeIndex(), move));
 			double estimation = getValueFunctionEstimation(features);
@@ -44,6 +46,20 @@ public class MyController extends AController implements Serializable{
 		return bestMove;
 	}
 
+	//filter the possible moves to saneMoves
+	public MOVE[] filterSaneMoves(MOVE[] poss, Game game, int nodeIndex){
+		MOVE[] saneMoves = null;
+		int size = 0; // size of the Array saneMoves[]
+		for (MOVE move : poss) {
+			if(getPillsInDirection(game, nodeIndex, move) > 0 ){
+				double distance = getJunctionDistance(game, nodeIndex, move); 
+				
+			
+			}
+		}
+		return saneMoves;
+	}
+	
 	public double getValueFunctionEstimation(Vector input) {
 		return valueFunction.getOutput(input);
 	}
