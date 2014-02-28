@@ -148,6 +148,7 @@ public class FeatureUtils {
 
 		return (double) pills / (game.getNumberOfPills() + game.getNumberOfPowerPills());
 	}
+	
 	/**
 	 * @return 	is pacman faster to the next junction compared to the ghosts
 	 */

@@ -5,6 +5,9 @@ import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.EnumMap;
+import java.util.Map;
 
 import pacman.game.Constants.GHOST;
 import pacman.game.Constants.MOVE;
@@ -24,75 +27,51 @@ public class MyController extends AController implements Serializable{
 	@Override
 	public MOVE getMove(Game game, long timeDue) {
 		int currentNode = game.getPacmanCurrentNodeIndex();
-		MOVE lastMove = game.getPacmanLastMoveMade();
 
-		MOVE bestMove = MOVE.NEUTRAL;
-		double bestMoveValueEstimation = Float.NEGATIVE_INFINITY;
-
-		if (game.getNeighbour(currentNode, lastMove) != -1) {
-			bestMove = lastMove;
-			bestMoveValueEstimation = getValueFunctionEstimation(extendFeatures(getFeatures(game, currentNode, lastMove)));
-		}
-
-		MOVE[] possMove = game.getPossibleMoves(game.getPacmanCurrentNodeIndex());
-		MOVE[] filterMove = new MOVE[possMove.length];
-		int j = 0;
-		for (int i = 0; i < game.getPossibleMoves(game.getPacmanCurrentNodeIndex()).length; i++) {			
-			MOVE move = game.getPossibleMoves(game.getPacmanCurrentNodeIndex())[i];
-			if (isMoveSane(move, game, currentNode)) {
-				filterMove[j] = move;
-				j++;
-			}
-        }
-		double[] chances = new double[filterMove.length];
-		double[] estimations = new double[filterMove.length];
-		int i = 0;
-		for (MOVE fmove : filterMove) {
-			if(fmove != null){
-				Vector features = extendFeatures(getFeatures(game, game.getPacmanCurrentNodeIndex(), fmove));
-				estimations[i] = getValueFunctionEstimation(features);
-			}
-			i++;
-		}	
-		i = 0;
-		for (MOVE fmove : filterMove) {
-			if(fmove != null){
-				chances[i] = Math.pow(Math.E, estimations[i]) / sumOfOther(filterMove, estimations);
-			}
-			i++;
-		}	
+		// get possible moves and sane moves
+		MOVE[] possibleMoves = game.getPossibleMoves(currentNode);
+		MOVE[] saneMoves = filterSaneMoves(possibleMoves, game, currentNode);
 		
+		// compute move "possibilities"
+		EnumMap<MOVE, Double> moveChances = new EnumMap<MOVE, Double>(MOVE.class);
+		for (MOVE move : saneMoves) {
+			Vector features = extendFeatures(getFeatures(game, currentNode, move));
+			double value = getValueFunctionEstimation(features);
+			double expValue = Math.exp(value);
+			moveChances.put(move, expValue);
+		}
+		
+		// compute actual possibilities
+		double scale = getMovesNormalizationScale(saneMoves, moveChances);
+		for (MOVE move : saneMoves) {
+			moveChances.put(move, moveChances.get(move) * scale);
+		}
+		
+		// select move
 		double random = Math.random();
 		double aux = 0;
-		i = 0;
-		for (MOVE fmove : filterMove) {
-			if (fmove != null) {
-				aux += chances[i];
-				if (aux >= random)
-					return fmove;
-			}
-			i++;
+		for (MOVE move : saneMoves) {
+			aux += moveChances.get(move);
+			if (aux >= random)
+				return move;
 		}
-		
+
 		return MOVE.NEUTRAL;
 	}
 
 	//sum up e^estimation of all moves
-	public double sumOfOther(MOVE[] filterMove, double[] estimations){
-		double ret = 0;
-		for(int i = 0; i < estimations.length; i++){
-			if(filterMove[i] != null ){
-				ret += Math.pow(Math.E, estimations[i]);
-			}
+	public double getMovesNormalizationScale(MOVE[] saneMoves, EnumMap<MOVE, Double> moveValues){
+		double sum = 0;
+		for (MOVE move : saneMoves) {
+			sum += moveValues.get(move);
 		}
-		return ret;
+		return 1 / sum;
 	}
-	// check if a single move is sane
 	
+	// check if a single move is sane
 	public boolean isMoveSane(MOVE poss, Game game, int nodeIndex){
-        return anyGhostFasterToJunction(game,nodeIndex,poss);
+        return !anyGhostFasterToJunction(game, nodeIndex, poss);
 	}
-		
 		
 	public boolean contains(int[] path, int node) {
 		for (int i : path) {
@@ -102,17 +81,13 @@ public class MyController extends AController implements Serializable{
 	}
 	
 	//filter the possible moves to saneMoves
-	public MOVE[] filterSaneMoves(MOVE[] poss, Game game, int nodeIndex){
-		MOVE[] saneMoves = null;
-		int size = 0; // size of the Array saneMoves[]
-		for (MOVE move : poss) {
-			if(getPillsInDirection(game, nodeIndex, move) > 0 ){
-				double distance = getJunctionDistance(game, nodeIndex, move); 
-				
-			
-			}
+	public MOVE[] filterSaneMoves(MOVE[] possibleMoves, Game game, int nodeIndex) {
+		ArrayList<MOVE> saneMoves = new ArrayList<MOVE>();
+		for (MOVE move : possibleMoves) {
+			if (isMoveSane(move, game, nodeIndex))
+				saneMoves.add(move);
 		}
-		return saneMoves;
+		return saneMoves.toArray(new MOVE[0]);
 	}
 	
 	public double getValueFunctionEstimation(Vector input) {
