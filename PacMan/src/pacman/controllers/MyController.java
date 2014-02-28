@@ -5,6 +5,8 @@ import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+
+import pacman.game.Constants.GHOST;
 import pacman.game.Constants.MOVE;
 import pacman.game.Game;
 import pacman.utils.Vector;
@@ -35,17 +37,48 @@ public class MyController extends AController implements Serializable{
 		MOVE[] possMove = game.getPossibleMoves(game.getPacmanCurrentNodeIndex());
 		MOVE[] filterMove = filterSaneMoves(possMove, game, game.getPacmanCurrentNodeIndex());
 		for (MOVE move : game.getPossibleMoves(game.getPacmanCurrentNodeIndex())) {
-			Vector features = extendFeatures(getFeatures(game, game.getPacmanCurrentNodeIndex(), move));
-			double estimation = getValueFunctionEstimation(features);
-			if (bestMoveValueEstimation < estimation) {
-				bestMoveValueEstimation = estimation;
-				bestMove = move;
+		for (int i = 0; i < game.getPossibleMoves(game.getPacmanCurrentNodeIndex()).length; i++) {			
+			int j = 0;
+			move = game.getPossibleMoves(game.getPacmanCurrentNodeIndex())[i];
+			if (isMoveSane(move, game, currentNode)) {
+				filterMove[j] = move;
+				j++;
 			}
 		}
-
+		for (MOVE fmove : filterMove) {
+				Vector features = extendFeatures(getFeatures(game, game.getPacmanCurrentNodeIndex(), fmove));
+				double estimation = getValueFunctionEstimation(features);
+				if (bestMoveValueEstimation < estimation) {
+					bestMoveValueEstimation = estimation;
+					bestMove = move;
+			}
+		}
+		}
 		return bestMove;
 	}
 
+	// check if a single move is sane
+	
+	public boolean isMoveSane(MOVE poss, Game game, int nodeIndex){
+		if (getPillsInDirection(game,nodeIndex, poss) > 0) {
+			int[] path = getJunctionPath(game, nodeIndex, poss);
+			for (GHOST ghost : GHOST.values()) {
+				if(contains(path, game.getGhostCurrentNodeIndex(ghost))) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+		
+		
+	public boolean contains(int[] path, int node) {
+		for (int i : path) {
+			if (i == node) return true;
+		}
+		return false;
+	}
+	
 	//filter the possible moves to saneMoves
 	public MOVE[] filterSaneMoves(MOVE[] poss, Game game, int nodeIndex){
 		MOVE[] saneMoves = null;
