@@ -79,7 +79,7 @@ public class FeatureUtils {
 	/**
 	 * convert a list of Integers into an array
 	 */
-	private static int[] toArray(LinkedList<Integer> integerList) {
+	public static int[] toArray(LinkedList<Integer> integerList) {
 	    int[] integers = new int[integerList.size()];
 	    int i = 0;
 	    for (int x : integerList)
@@ -88,7 +88,7 @@ public class FeatureUtils {
 	    return integers;
 	}
 
-	private static double getNumberOfSavePaths(Game game, int nodeIndex, MOVE initialMove, int depthLimit) {
+	public static double getNumberOfSavePaths(Game game, int nodeIndex, MOVE initialMove, int depthLimit) {
 		// for each living ghost get the path to next junction
 		EnumMap<GHOST, int[]> ghostJunctionPaths = getGhostJunctionPaths(game);
 
@@ -125,7 +125,7 @@ public class FeatureUtils {
 	/**
 	 * get the distance to the next junction
 	 */
-	private static double getJunctionDistance(Game game, int nodeIndex, MOVE initialMove) {
+	public static double getJunctionDistance(Game game, int nodeIndex, MOVE initialMove) {
 		if (game.getNeighbour(nodeIndex, initialMove) == -1)
 			throw new IllegalArgumentException("invalid move given");
 
@@ -136,7 +136,7 @@ public class FeatureUtils {
 	/**
 	 * get the number of pills in the given direction until a junction is reached
 	 */
-	private static double getPillsInDirection(Game game, int nodeIndex, MOVE initialMove) {
+	public static double getPillsInDirection(Game game, int nodeIndex, MOVE initialMove) {
 		int[] pathToJunction = getJunctionPath(game, nodeIndex, initialMove);
 		int pills = 0;
 		for (int node : pathToJunction) {
@@ -152,7 +152,7 @@ public class FeatureUtils {
 	/**
 	 * get the minimum path distance needed to reach any node in goalNodeIndices starting in startNodeIndex and taking the initialMove.
 	 */
-	private static double getMinimumDistance(Game game, int startNodeIndex, MOVE initialMove, int[] goalNodeIndices) {
+	public static double getMinimumDistance(Game game, int startNodeIndex, MOVE initialMove, int[] goalNodeIndices) {
 		if (game.getNeighbour(startNodeIndex, initialMove) == -1)
 			throw new IllegalArgumentException("invalid move given");
 
@@ -216,7 +216,7 @@ public class FeatureUtils {
 	/**
 	 * get the remaining edible time for all edible ghosts
 	 */
-	private static double getRemainingEdibleTime(Game game) {
+	public static double getRemainingEdibleTime(Game game) {
 		int time = 0;
 		for (GHOST ghost : GHOST.values()) {
 			if (game.getGhostEdibleTime(ghost) > 0) {
@@ -231,7 +231,7 @@ public class FeatureUtils {
 	/**
 	 * get the length of the longest save path
 	 */
-	private static double getSavePathLength(Game game, int nodeIndex, MOVE initialMove, int depthLimit) {
+	public static double getSavePathLength(Game game, int nodeIndex, MOVE initialMove, int depthLimit) {
 		// assure a general depth limit
 		depthLimit = Math.min(depthLimit, MAX_DISTANCE);
 
@@ -327,7 +327,7 @@ public class FeatureUtils {
 	/**
 	 * test if the current level is completable by following the path to the next junction
 	 */
-	private static double completable(Game game, int nodeIndex, MOVE initialMove) {
+	public static double completable(Game game, int nodeIndex, MOVE initialMove) {
 		EnumMap<GHOST, int[]> ghostJunctionPaths = getGhostJunctionPaths(game);
 		int remainingPills = game.getNumberOfActivePills() + game.getNumberOfActivePowerPills();
 		int safelyEdiblePills = 0;
@@ -351,7 +351,7 @@ public class FeatureUtils {
 	/**
 	 * get the path to the next junction starting in nodeIndex taking the initial Move
 	 */
-	private static int[] getJunctionPath(Game game, int nodeIndex, MOVE initialMove) {
+	public static int[] getJunctionPath(Game game, int nodeIndex, MOVE initialMove) {
 		// no move
 		if (initialMove == MOVE.NEUTRAL)
 			throw new IllegalArgumentException("move must not be NEUTRAL");
@@ -398,7 +398,7 @@ public class FeatureUtils {
 	/**
 	 * get the path to the next junction for each living ghost
 	 */
-	private static EnumMap<GHOST, int[]> getGhostJunctionPaths(Game game) {
+	public static EnumMap<GHOST, int[]> getGhostJunctionPaths(Game game) {
 		EnumMap<GHOST, int[]> ghostJunctionPaths = new EnumMap<GHOST, int[]>(GHOST.class);
 		for (GHOST ghost : GHOST.values()) {
 			// ghost is alive
@@ -418,7 +418,7 @@ public class FeatureUtils {
 	/**
 	 * get length of the longest ghost junction path
 	 */
-	private static int getMaxGhostJunctionPathLength(Game game, EnumMap<GHOST, int[]> ghostJunctionPaths) {
+	public static int getMaxGhostJunctionPathLength(Game game, EnumMap<GHOST, int[]> ghostJunctionPaths) {
 		int max = 0;
 		for (GHOST ghost : GHOST.values()) {
 			if (game.getGhostLairTime(ghost) == 0) {
@@ -432,7 +432,7 @@ public class FeatureUtils {
 	/**
 	 * test if nodeIndex can be reached by any ghost within the time limit
 	 */
-	private static boolean reachableByGhost(Game game, int nodeIndex, int timeLimit, EnumMap<GHOST, int[]> ghostJunctionPaths) {
+	public static boolean reachableByGhost(Game game, int nodeIndex, int timeLimit, EnumMap<GHOST, int[]> ghostJunctionPaths) {
 		for (GHOST ghost : GHOST.values()) {
 			// ghost is inside the lair
 			if (game.getGhostLairTime(ghost) > 0) {
@@ -474,7 +474,7 @@ public class FeatureUtils {
 	/**
 	 * a node used for breadth first search
 	 */
-	private static class BFSNode {
+	public static class BFSNode {
 		private final int nodeIndex;
 		private final int preNodeIndex;
 		private final int depth;
