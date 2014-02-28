@@ -148,7 +148,18 @@ public class FeatureUtils {
 
 		return (double) pills / (game.getNumberOfPills() + game.getNumberOfPowerPills());
 	}
-
+	/**
+	 * @return 	is pacman faster to the next junction compared to the ghosts
+	 */
+	public static boolean anyGhostFasterToJunction(Game game, int nodeIndex, MOVE move){
+		double savePath = getSavePathLength(game, nodeIndex, move, 110);
+		double junctionDist = getJunctionDistance(game, nodeIndex, move);
+		if(savePath >= junctionDist){
+			return true;
+		}
+		return false;
+	}
+	
 	/**
 	 * get the minimum path distance needed to reach any node in goalNodeIndices starting in startNodeIndex and taking the initialMove.
 	 */
