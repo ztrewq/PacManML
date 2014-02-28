@@ -36,8 +36,8 @@ public class MyController extends AController implements Serializable{
 
 		MOVE[] possMove = game.getPossibleMoves(game.getPacmanCurrentNodeIndex());
 		MOVE[] filterMove = new MOVE[possMove.length];
+		int j = 0;
 		for (int i = 0; i < game.getPossibleMoves(game.getPacmanCurrentNodeIndex()).length; i++) {			
-			int j = 0;
 			MOVE move = game.getPossibleMoves(game.getPacmanCurrentNodeIndex())[i];
 			if (isMoveSane(move, game, currentNode)) {
 				filterMove[j] = move;
