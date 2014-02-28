@@ -66,6 +66,7 @@ public class MyController extends AController implements Serializable{
 					return false;
 				}
 			}
+            return anyGhostFasterToJunction(game,nodeIndex,poss);
 		}
 		return true;
 	}
