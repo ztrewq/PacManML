@@ -144,17 +144,10 @@ public class Utils {
 		
 		@Override
 		public void run() {
-			for (String maze : mazes) {
-				game.setGameState(maze);
-//				System.out.println(game.getPacmanNumberOfLivesRemaining());
-				int currentLevel = game.getCurrentLevel();
-				while(!game.wasPacManEaten() || game.getCurrentLevel() == currentLevel) {
-					game.advanceGame(pacmanController.getMove(game, -1), ghostController.getMove(game, -1));
-				}
-//				System.out.println("next maze");
-//				if (!game.wasPacManEaten())
-					accumulatedScore.addScore(game.getScore());
+			while(!game.gameOver()) {
+				game.advanceGame(pacmanController.getMove(game, -1), ghostController.getMove(game, -1));
 			}
+			accumulatedScore.addScore(game.getScore());
 		}
 	}
 
@@ -166,10 +159,8 @@ public class Utils {
 			accumulatedScore = 0;
 		}
 		
-		public void addScore(int score) {
-			synchronized(this) {
-				accumulatedScore += score;
-			}
+		public synchronized void addScore(int score) {
+			accumulatedScore += score;
 		}
 		
 		public int getScore() {
