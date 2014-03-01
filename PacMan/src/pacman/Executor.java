@@ -147,6 +147,13 @@ public class Executor
 	}
 	
 	public static void train(MyController pacManController, int numTrials, int i) {
+		int failCount = 0;
+		int failLimit = 4;
+		float[] lastEvals = new float[4];
+		int lastEvalsIndex = 0;
+		float convergenceEpsilon = 500;
+		
+		
 //		GameView gameView = new GameView(new Game(0)).showGame();
 		float bestEvaluation = Utils.evalPolicy(pacManController, numTrials);
 		ParaValueList paraValue = new ParaValueList();
@@ -173,6 +180,34 @@ public class Executor
 				bestEvaluation = currentEvaluation;
 				pacManController.writeToFile("linearcontroller" + i);
 				System.out.println("saved");
+			}
+			
+			// stop training if the controller performs poor several times in a row
+			if (currentEvaluation < bestEvaluation / 2) {
+				failCount++;
+				if (failCount > failLimit) {
+					System.out.println("starting new training run");
+					return;
+				}
+			}
+			else {
+				failCount = 0;
+			}
+			
+			// stop training if the controller converged
+			lastEvals[lastEvalsIndex] = currentEvaluation;
+			lastEvalsIndex = (lastEvalsIndex + 1) % lastEvals.length;
+			boolean converged = true;
+			for (int j = 0; j < lastEvals.length; j++) {
+				for (int k = j + 1; k < lastEvals.length; k++) {
+					if (Math.abs(lastEvals[j] - lastEvals[k]) > convergenceEpsilon) {
+						converged = false;
+					}
+				}
+			}
+			if (converged) {
+				System.out.println("controller converged. starting new training run.");
+				return;
 			}
 			
 			// demonstrate controller 
