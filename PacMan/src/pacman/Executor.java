@@ -79,8 +79,8 @@ public class Executor
 //		writeSVPairs(loadReplay("replay"), nnC);
 //		Vector coefficients = getLinearRegressionCoefficients(esvp);
 //		runGame(new MyController(coefficients), new StarterGhosts(), true, 10);
-		MyController ctrl = MyController.createFromFile("linearcontroller3");
-		runGame(new MyController(ctrl.getPolicyParameters().scale(500)), new StarterGhosts(), true, 1);
+		MyController ctrl = MyController.createFromFile("linearcontroller");
+		runGame(ctrl, new StarterGhosts(), true, 10);
 //		train(ctrl, 25);
 
 //		RBFController rbfc = new RBFController(29, 5, 1);
