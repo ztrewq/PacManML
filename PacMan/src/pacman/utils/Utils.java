@@ -26,7 +26,7 @@ public class Utils {
 		double[][] parametersVariations = new double[runs][];
 		double[][] parametersEvaluations = new double[runs][1];
 		for (int i = 0; i < runs; i++) {
-			Vector parametersVariation = Vector.getRandomVector(dimension, 0, 0.05);
+			Vector parametersVariation = Vector.getRandomVector(dimension, -2.5, 2.5);
 			Vector newParameters = initialParameters.copy().add(parametersVariation);
 			pacmanController.setPolicyParameters(newParameters);
 			parametersVariations[i] = parametersVariation.getValues();
@@ -48,8 +48,8 @@ public class Utils {
 	public static Vector getNewUpdateValues(Vector oldUpdateValues, Vector oldGradient, Vector newGradient) {
 		double lambdaPlus = 1.2;
 		double lambdaMinus = 0.5;
-		double min = 1e-7;
-		double max = 0.01;
+		double min = 1e-4;
+		double max = 10;
 		
 		double[] newUpdateValues = new double[oldUpdateValues.getDimension()];
 		for (int i = 0; i < newUpdateValues.length; i++) {

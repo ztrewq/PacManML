@@ -80,8 +80,8 @@ public class Executor
 //		Vector coefficients = getLinearRegressionCoefficients(esvp);
 //		runGame(new MyController(coefficients), new StarterGhosts(), true, 10);
 		MyController ctrl = MyController.createFromFile("linearcontroller");
-		runGame(ctrl, new StarterGhosts(), true, 10);
-//		train(ctrl, 25);
+//		runGame(ctrl, new StarterGhosts(), true, 10);
+		train(ctrl);
 
 //		RBFController rbfc = new RBFController(29, 5, 1);
 //		RBFController rbfc = new RBFController("rbfcontroller2");
@@ -140,15 +140,22 @@ public class Executor
 		 */
 	}
 	
-	public static void train(MyController pacManController, int numTrials) {
-		GameView gameView = new GameView(new Game(0)).showGame();
+	public static void train(MyController pacManController) {
+		int run = 1;
+		while (true) {
+			train(new MyController(pacManController.getPolicyParameters()), 50, run);
+		}
+	}
+	
+	public static void train(MyController pacManController, int numTrials, int i) {
+//		GameView gameView = new GameView(new Game(0)).showGame();
 		float bestEvaluation = Utils.evalPolicy(pacManController, numTrials);
 		ParaValueList paraValue = new ParaValueList();
-		System.out.println("evaluation before training: " + bestEvaluation);
+		System.out.println("\nrun " + i + " evaluation before training: " + bestEvaluation);
 		
 		// train
 		int n = pacManController.getPolicyParameters().getDimension(); 
-		Vector updateValues = new Vector(n, 0.01); // vector with initial update values
+		Vector updateValues = new Vector(n, 1); // vector with initial update values
 		Vector oldGradient = new Vector(n); // 0 vector
 		Vector newGradient = new Vector(n); // 0 vector
 		while (true) {
@@ -156,17 +163,16 @@ public class Executor
 			newGradient = getGradient(pacManController, numTrials);
 //			newGradient.add(- newGradient.getMean());
 			updateValues = getNewUpdateValues(updateValues, oldGradient, newGradient);
-//			pacManController.setPolicyParameters((pacManController.getPolicyParameters().add(updateValues)).normalize());
-			pacManController.setPolicyParameters(pacManController.getPolicyParameters().add(newGradient.scale(1e-9)));
+			pacManController.setPolicyParameters(pacManController.getPolicyParameters().add(updateValues));
 			float currentEvaluation = Utils.evalPolicy(pacManController, numTrials);
-			writeValues(pacManController, currentEvaluation, "valuesLin.txt");
+			writeValues(pacManController, currentEvaluation, "valuesLin" + i + ".txt");
 			System.out.println("new evaluation : " + currentEvaluation);
 			paraValue.add(new ParaValuePair(pacManController.getPolicyParameters(), currentEvaluation));
-			ParaValueList.writeToFile(paraValue, "parametersValuePair");
+			ParaValueList.writeToFile(paraValue, "parametersValuePair" + i);
 			paraValue.printLast();
 			if (currentEvaluation > bestEvaluation) {
 				bestEvaluation = currentEvaluation;
-				pacManController.writeToFile("linearcontroller3");
+				pacManController.writeToFile("linearcontroller" + i);
 				System.out.println("saved");
 			}
 			
