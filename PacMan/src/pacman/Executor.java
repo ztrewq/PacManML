@@ -44,7 +44,6 @@ import pacman.game.Game;
 import pacman.game.GameView;
 import pacman.game.Constants.GHOST;
 import pacman.game.Constants.MOVE;
-import pacman.gradient.Gradient;
 import pacman.utils.FeatureUtils;
 import pacman.utils.ParaValueList;
 import pacman.utils.ParaValuePair;
