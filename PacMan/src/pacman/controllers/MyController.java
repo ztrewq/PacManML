@@ -91,7 +91,7 @@ public class MyController extends AController implements Serializable{
 	}
 	
 	public double getValueFunctionEstimation(Vector input) {
-		return valueFunction.getOutput(input);
+		return valueFunction.getOutput(input) + 25;
 	}
 
 	public Vector getPolicyParameters() {
