@@ -161,7 +161,7 @@ public class Executor
 		
 		// train
 		int n = pacManController.getPolicyParameters().getDimension(); 
-		Vector updateValues = new Vector(n, 1); // vector with initial update values
+		Vector updateValues = new Vector(n, 10); // vector with initial update values
 		Vector oldGradient = new Vector(n); // 0 vector
 		Vector newGradient = new Vector(n); // 0 vector
 		while (true) {
