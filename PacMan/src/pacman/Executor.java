@@ -16,7 +16,7 @@ import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import neuralNetwork.NeuralNetwork;
+import neuralNetwork.NNR;
 import org.encog.ml.MLRegression;
 import org.encog.ml.data.MLDataSet;
 import org.encog.ml.data.basic.BasicMLDataSet;
@@ -226,7 +226,7 @@ public class Executor
 	public static void writeValues(AController controller, float value, String file){
 		BufferedWriter br = null;
 		try {
-			br = new BufferedWriter(new FileWriter(file));
+			br = new BufferedWriter(new FileWriter(file, true));
 			br.write(Float.toString(value)+",");
 		}
 		catch (IOException e) {
@@ -311,7 +311,7 @@ public class Executor
 			throw new IllegalArgumentException();
 		
 		double[] coefficients = new double[stateValuePairs[0].getState().getDimension()];
-		NeuralNetwork nn = new NeuralNetwork(new int[] {coefficients.length, 1});
+		NNR nn = new NNR(new int[] {coefficients.length, 1});
 		
 		double[][] inputValues = new double[stateValuePairs.length][coefficients.length];
 		double[][] outputValues = new double[stateValuePairs.length][1];
@@ -321,11 +321,11 @@ public class Executor
 			outputValues[i][0] = stateValuePairs[i].getValue();
 		}
 		
-		nn.train(inputValues, outputValues, 15000);
+		nn.train(inputValues, outputValues, 15000, 0);
 		double[] weights = nn.getWeights();
 		
 		for (int i = 0; i < coefficients.length; i++) {
-			coefficients[i] = weights[i+1];
+			coefficients[i] = weights[i];
 		}
 		
 		return new Vector(coefficients);

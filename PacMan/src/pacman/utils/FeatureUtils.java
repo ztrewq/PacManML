@@ -31,47 +31,47 @@ public class FeatureUtils {
 			}
 		}
 
-		double[] features = new double[12];
-		features[0] = getSavePathLength(game, nodeIndex, move, 110);
-		features[1] = getNumberOfSavePaths(game, nodeIndex, move, 50);
-		features[2] = getJunctionDistance(game, nodeIndex, move);
-		features[3] = getPillsInDirection(game, nodeIndex, move);
-		features[4] = getMinimumDistance(game, nodeIndex, move, game.getActivePillsIndices());
-		features[5] = getMinimumDistance(game, nodeIndex, move, game.getActivePowerPillsIndices());
-		features[6] = completable(game, nodeIndex, move);
-		features[7] = getMinimumDistance(game, nodeIndex, move, toArray(edibleGhosts));
-		features[8] = getRemainingEdibleTime(game);
-		features[9] = getMinimumDistance(game, nodeIndex, move, toArray(normalGhosts));
-		features[10] = getMinimumDistance(game, game.getNeighbour(nodeIndex, move), move.opposite(), toArray(normalGhosts));
-		features[11] = move == game.getPacmanLastMoveMade().opposite() ? 1 : 0;
+		double[] features = new double[14];
+		int i = 0;
+		features[i++] = getSavePathLength(game, nodeIndex, move, 110);
+		features[i++] = getNumberOfSavePaths(game, nodeIndex, move, 50);
+		features[i++] = getJunctionDistance(game, nodeIndex, move);
+		features[i++] = getShortestPathDifference(game, nodeIndex, move);
+		features[i++] = getPillsInDirection(game, nodeIndex, move);
+		features[i++] = getMinimumDistance(game, nodeIndex, move, game.getActivePillsIndices());
+		features[i++] = getMinimumDistance(game, nodeIndex, move, game.getActivePowerPillsIndices());
+		features[i++] = getRemainingPills(game);
+		features[i++] = completable(game, nodeIndex, move);
+		features[i++] = getMinimumDistance(game, nodeIndex, move, toArray(edibleGhosts));
+		features[i++] = getRemainingEdibleTime(game);
+		features[i++] = getMinimumDistance(game, nodeIndex, move, toArray(normalGhosts));
+		features[i++] = getMinimumDistance(game, game.getNeighbour(nodeIndex, move), move.opposite(), toArray(normalGhosts));
+		features[i++] = move == game.getPacmanLastMoveMade().opposite() ? 1 : 0;
 
 		return new Vector(features);
 	}
 
 	public static Vector extendFeatures(Vector features) {
-		double[] extendedFeatures = new double[29];
+		double[] extendedFeatures = new double[30];
 		int index = 0;
 
 		// copy old features
-		for (double feature : features.getValues()) {
+		double[] oldFeatures = features.getValues();
+		for (double feature : oldFeatures) {
 			extendedFeatures[index++] = feature;
 		}
 
-		// add squared value of features 0-5 and 7-9
-		for (int j = 0; j <= 5; j++)
-			extendedFeatures[index++] = features.getAt(j) * features.getAt(j);
-		for (int j = 7; j <= 9; j++)
-			extendedFeatures[index++] = features.getAt(j) * features.getAt(j);
+		// add squared value of features 0-7 and 9-12
+		for (int j = 0; j <= 7; j++)
+			extendedFeatures[index++] = oldFeatures[j] * oldFeatures[j];
+		for (int j = 9; j <= 12; j++)
+			extendedFeatures[index++] = oldFeatures[j] * oldFeatures[j];
 
 		// add some further featuers
-		extendedFeatures[index++] = (1 - features.getAt(7)) * features.getAt(8); // edible ghosts
-		extendedFeatures[index++] = features.getAt(0) - features.getAt(2); // safe path length after junction
-		extendedFeatures[index++] = features.getAt(9) - features.getAt(2); // danger value
-		extendedFeatures[index++] = features.getAt(9) - features.getAt(5); // distance difference ghost powerPill
-		extendedFeatures[index++] = features.getAt(0) - features.getAt(4);
-		extendedFeatures[index++] = features.getAt(0) - features.getAt(5);
-		extendedFeatures[index++] = features.getAt(0) - features.getAt(7);
-		extendedFeatures[index++] = features.getAt(0) - features.getAt(9);
+		extendedFeatures[index++] = (1 - oldFeatures[9]) * oldFeatures[10]; // edible ghosts
+		extendedFeatures[index++] = oldFeatures[0] - oldFeatures[2]; // safe path length after junction
+		extendedFeatures[index++] = oldFeatures[11] - oldFeatures[2]; // danger value
+		extendedFeatures[index++] = oldFeatures[11] - oldFeatures[6]; // distance difference ghost powerPill
 
 		return new Vector(extendedFeatures);
 	}
@@ -131,6 +131,14 @@ public class FeatureUtils {
 
 		int[] pathToFirstJunction = getJunctionPath(game, game.getNeighbour(nodeIndex, initialMove), initialMove);
 		return (double) pathToFirstJunction.length / MAX_DISTANCE;
+	}
+	
+	public static double getShortestPathDifference(Game game, int nodeIndex, MOVE initialMove) {
+		int[] pathToJunction = getJunctionPath(game, nodeIndex, initialMove);
+		int pathToJunctionLength = pathToJunction.length - 1;		
+		int shortestPathLength = game.getShortestPathDistance(nodeIndex, pathToJunction[pathToJunctionLength]);
+		
+		return (double) (pathToJunctionLength - shortestPathLength) / MAX_DISTANCE;
 	}
 
 	/**
@@ -334,6 +342,13 @@ public class FeatureUtils {
 
 		maxDepth = Math.min(maxDepth, depthLimit);
 		return (double) maxDepth / MAX_DISTANCE;
+	}
+	
+	/**
+	 * get the scaled amount of remaining pills and power pills
+	 */
+	public static double getRemainingPills(Game game) {
+		return (double) (game.getNumberOfActivePills() + game.getNumberOfActivePowerPills()) / (game.getNumberOfPills() + game.getNumberOfPowerPills());
 	}
 
 	/**

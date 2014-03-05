@@ -1,18 +1,18 @@
 package pacman.controllers;
 
-import neuralNetwork.NeuralNetwork;
+import neuralNetwork.NNR;
 import pacman.game.Constants.MOVE;
 import pacman.game.Game;
 import pacman.utils.FeatureUtils;
 import pacman.utils.Vector;
 
-public class NeuralNetworkController extends AController {
+public class NeuralNetworkController extends Controller<MOVE> {
 
-	private static final int[] topology = {12,25,1};
-	private NeuralNetwork valueFunction;
+	private static final int[] topology = {14,20,20,1};
+	private NNR valueFunction;
 	
 	public NeuralNetworkController() {
-		valueFunction = new NeuralNetwork(topology);
+		valueFunction = new NNR(topology);
 	}
 	
 	@Override
@@ -45,7 +45,7 @@ public class NeuralNetworkController extends AController {
 	}
 	
 	public static NeuralNetworkController createFromFile(String file) {
-		NeuralNetwork valueFunction = NeuralNetwork.createFromFile(file);
+		NNR valueFunction = NNR.createFromFile(file);
 		if (valueFunction != null) {
 			int[] topologyValueFunction = valueFunction.getTopology();
 			
@@ -66,20 +66,4 @@ public class NeuralNetworkController extends AController {
 	public double getValueFunctionEstimation(Vector input) {
 		return valueFunction.getOutput(input.getValues())[0];
 	}
-	
-	public Vector getPolicyParameters() {
-		return new Vector(valueFunction.getWeights());
-	}
-	
-	public void setPolicyParameters(Vector parameters) {
-		valueFunction = new NeuralNetwork(valueFunction.getTopology(), parameters.getValues());
-	}
-
-	@Override
-	public AController copy() {
-		NeuralNetworkController nnc = new NeuralNetworkController();
-		nnc.valueFunction = new NeuralNetwork(valueFunction.getTopology(), valueFunction.getWeights());
-		return nnc;
-	}
-
 }
