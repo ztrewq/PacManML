@@ -10,18 +10,22 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.LinkedList;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+
 import neuralNetwork.NNR;
+
 import org.encog.ml.MLRegression;
 import org.encog.ml.data.MLDataSet;
 import org.encog.ml.data.basic.BasicMLDataSet;
 import org.encog.persist.EncogDirectoryPersistence;
 import org.encog.util.simple.EncogUtility;
+
 import pacman.controllers.AController;
 import pacman.controllers.Controller;
 import pacman.controllers.HumanController;
@@ -143,16 +147,17 @@ public class Executor
 		int run = 1;
 		while (true) {
 			train(new MyController(pacManController.getPolicyParameters()), 50, run);
+			run++;
 		}
 	}
 	
 	public static void train(MyController pacManController, int numTrials, int i) {
 		int failCount = 0;
 		int failLimit = 4;
-		float[] lastEvals = new float[4];
-		int lastEvalsIndex = 0;
-		float convergenceEpsilon = 500;
-		
+		double[] lastMaxAbsUpdates = new double[4];
+		int lastMaxAbsUpdateIndex = 0;
+		double convergenceEpsilon = 1;
+		Arrays.fill(lastMaxAbsUpdates, convergenceEpsilon);
 		
 //		GameView gameView = new GameView(new Game(0)).showGame();
 		float bestEvaluation = Utils.evalPolicy(pacManController, numTrials);
@@ -195,17 +200,9 @@ public class Executor
 			}
 			
 			// stop training if the controller converged
-			lastEvals[lastEvalsIndex] = currentEvaluation;
-			lastEvalsIndex = (lastEvalsIndex + 1) % lastEvals.length;
-			boolean converged = true;
-			for (int j = 0; j < lastEvals.length; j++) {
-				for (int k = j + 1; k < lastEvals.length; k++) {
-					if (Math.abs(lastEvals[j] - lastEvals[k]) > convergenceEpsilon) {
-						converged = false;
-					}
-				}
-			}
-			if (converged) {
+			lastMaxAbsUpdates[lastMaxAbsUpdateIndex] = getMaxAbsUpdateValue(updateValues);
+			lastMaxAbsUpdateIndex = (lastMaxAbsUpdateIndex + 1) % lastMaxAbsUpdates.length;
+			if (converged(lastMaxAbsUpdates, convergenceEpsilon)) {
 				System.out.println("controller converged. starting new training run.");
 				return;
 			}
@@ -220,6 +217,26 @@ public class Executor
 //		        gameView.repaint();
 //			}
 		}
+	}
+	
+	private static double getMaxAbsUpdateValue(Vector updateValues) {
+		double maxAbsValue = 0;
+		double[] values = updateValues.getValues();
+		for (double value : values) {
+			maxAbsValue = Math.max(maxAbsValue, Math.abs(value));
+		}
+		
+		return maxAbsValue;
+	}
+	
+	private static boolean converged(double[] lastMaxAbsUpdateValues, double epsilon) {
+		for (double value : lastMaxAbsUpdateValues) {
+			if (value >= epsilon) {
+				return false;
+			}
+		}
+		
+		return true;
 	}
 	
 	// write evaluation values to a values.txt-file (valuesLin.txt or valuesNeural.txt)
