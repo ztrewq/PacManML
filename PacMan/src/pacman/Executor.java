@@ -82,9 +82,9 @@ public class Executor
 //		writeSVPairs(loadReplay("replay"), nnC);
 //		Vector coefficients = getLinearRegressionCoefficients(esvp);
 //		runGame(new MyController(coefficients), new StarterGhosts(), true, 10);
-		MyController ctrl = MyController.createFromFile("linearcontroller2");
-		runGame(ctrl, new StarterGhosts(), true, 10);
-//		train(ctrl);
+		MyController ctrl = MyController.createFromFile("linearcontroller");
+//		runGame(ctrl, new StarterGhosts(), true, 10);
+		train(ctrl);
 
 //		RBFController rbfc = new RBFController(29, 5, 1);
 //		RBFController rbfc = new RBFController("rbfcontroller2");
@@ -187,7 +187,7 @@ public class Executor
 				System.out.println("saved");
 			}
 			
-			// stop training if the controller performs poor several times in a row
+			// stop training if the controller performs poorly several times in a row
 			if (currentEvaluation < bestEvaluation / 2) {
 				failCount++;
 				if (failCount > failLimit) {

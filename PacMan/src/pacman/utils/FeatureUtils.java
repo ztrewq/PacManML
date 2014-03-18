@@ -158,10 +158,9 @@ public class FeatureUtils {
 	}
 	
 	/**
-	 * @return 	is pacman faster to the next junction compared to the ghosts
+	 * test whether the given move is sane
 	 */
 	public static boolean isSane(Game game, int nodeIndex, MOVE move){
-		// get junction paths for pacMan and ghosts
 		EnumMap<GHOST, int[]> ghostJunctionPaths = getGhostJunctionPaths(game);
 		int[] myJunctionPath = getJunctionPath(game, nodeIndex, move);
 		for (int i = 0; i < myJunctionPath.length; i++) {
