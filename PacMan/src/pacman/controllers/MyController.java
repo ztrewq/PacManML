@@ -31,6 +31,8 @@ public class MyController extends AController implements Serializable{
 		// get possible moves and sane moves
 		MOVE[] possibleMoves = game.getPossibleMoves(currentNode);
 		MOVE[] saneMoves = filterSaneMoves(possibleMoves, game, currentNode);
+		if (saneMoves.length == 0)
+			saneMoves = possibleMoves;
 		
 		// compute move "possibilities"
 		EnumMap<MOVE, Double> moveChances = new EnumMap<MOVE, Double>(MOVE.class);
@@ -67,11 +69,6 @@ public class MyController extends AController implements Serializable{
 		}
 		return 1 / sum;
 	}
-	
-	// check if a single move is sane
-	public boolean isMoveSane(MOVE poss, Game game, int nodeIndex){
-        return !anyGhostFasterToJunction(game, nodeIndex, poss);
-	}
 		
 	public boolean contains(int[] path, int node) {
 		for (int i : path) {
@@ -84,7 +81,7 @@ public class MyController extends AController implements Serializable{
 	public MOVE[] filterSaneMoves(MOVE[] possibleMoves, Game game, int nodeIndex) {
 		ArrayList<MOVE> saneMoves = new ArrayList<MOVE>();
 		for (MOVE move : possibleMoves) {
-			if (isMoveSane(move, game, nodeIndex))
+			if (isSane(game, nodeIndex, move))
 				saneMoves.add(move);
 		}
 		return saneMoves.toArray(new MOVE[0]);
