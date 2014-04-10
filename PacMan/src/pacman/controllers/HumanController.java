@@ -1,8 +1,10 @@
 package pacman.controllers;
 
 import java.awt.event.KeyEvent;
+
 import pacman.game.Game;
 import pacman.game.Constants.MOVE;
+import pacman.utils.FeatureUtils;
 
 /*
  * Allows a human player to play the game using the arrow key of the keyboard.
@@ -21,7 +23,17 @@ public class HumanController extends Controller<MOVE>
     	return input;
     }
 
-    public MOVE getMove(Game game,long dueTime)
+    public MOVE getMove(Game game,long dueTime) {
+    	MOVE move = _getMove(game, dueTime);
+    	int pacManNodeIndex = game.getPacmanCurrentNodeIndex();
+    	if (game.getNeighbour(pacManNodeIndex, move) != -1)
+    		System.out.println(FeatureUtils.getShortestPathDifference(game, pacManNodeIndex, move));
+    	
+    	
+    	return move;
+    }
+    
+    public MOVE _getMove(Game game,long dueTime)
     {
     	switch(input.getKey())
     	{
