@@ -2,6 +2,7 @@ package pacman.utils;
 
 import static pacman.game.Constants.EAT_DISTANCE;
 
+import java.awt.Color;
 import java.util.EnumMap;
 import java.util.LinkedList;
 
@@ -9,6 +10,7 @@ import pacman.game.Constants;
 import pacman.game.Game;
 import pacman.game.Constants.GHOST;
 import pacman.game.Constants.MOVE;
+import pacman.game.GameView;
 
 public class FeatureUtils {
 
@@ -137,6 +139,10 @@ public class FeatureUtils {
 		int[] pathToJunction = getJunctionPath(game, nodeIndex, initialMove);
 		int pathToJunctionLength = pathToJunction.length - 1;		
 		int shortestPathLength = game.getShortestPathDistance(nodeIndex, pathToJunction[pathToJunctionLength]);
+		
+		int[] shortestPath = game.getShortestPath(nodeIndex, pathToJunction[pathToJunctionLength]);
+		GameView.addPoints(game, Color.gray, shortestPath);
+		GameView.addPoints(game, Color.green, pathToJunction);
 		
 		return (double) (pathToJunctionLength - shortestPathLength) / MAX_DISTANCE;
 	}
